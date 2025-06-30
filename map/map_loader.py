@@ -10,6 +10,3 @@ def load_map(filename):
         territories[name] = Territory(data['continent'], data['adjacent'])
     
     return territories
-
-
-load_map("map/world_map.json")
