@@ -1,374 +1,372 @@
 {
-  "territories": {
-    "Alaska": {
-      "continent": "North America",
-      "adjacent": [
-        "Kamchatka",
-        "Northwest",
-        "Alberta"
-      ]
-    },
-    "Kamchatka": {
-      "continent": "Asia",
-      "adjacent": [
-        "Alaska",
-        "Yakutsk",
-        "Japan"
-      ]
-    },
-    "Northwest": {
-      "continent": "North America",
-      "adjacent": [
-        "Alaska",
-        "Greenland",
-        "Ontario",
-        "Alberta"
-      ]
-    },
-    "Alberta": {
-      "continent": "North America",
-      "adjacent": [
-        "Alaska",
-        "Northwest",
-        "Ontario",
-        "WUS"
-      ]
-    },
-    "Greenland": {
-      "continent": "North America",
-      "adjacent": [
-        "Northwest",
-        "Ontario",
-        "Quebec",
-        "Iceland"
-      ]
-    },
-    "Ontario": {
-      "continent": "North America",
-      "adjacent": [
-        "Northwest",
-        "Greenland",
-        "Alberta",
-        "Quebec",
-        "WUS",
-        "EUS"
-      ]
-    },
-    "Quebec": {
-      "continent": "North America",
-      "adjacent": [
-        "Greenland",
-        "Ontario",
-        "EUS"
-      ]
-    },
-    "Iceland": {
-      "continent": "Europe",
-      "adjacent": [
-        "Greenland",
-        "Scandinavia",
-        "GBr"
-      ]
-    },
-    "WUS": {
-      "continent": "North America",
-      "adjacent": [
-        "Alberta",
-        "Ontario",
-        "EUS",
-        "CAm"
-      ]
-    },
-    "EUS": {
-      "continent": "North America",
-      "adjacent": [
-        "Ontario",
-        "Quebec",
-        "WUS",
-        "CAm"
-      ]
-    },
-    "CAm": {
-      "continent": "North America",
-      "adjacent": [
-        "WUS",
-        "EUS",
-        "Venezuela"
-      ]
-    },
-    "Venezuela": {
-      "continent": "South America",
-      "adjacent": [
-        "CAm",
-        "Brazil",
-        "Peru"
-      ]
-    },
-    "Brazil": {
-      "continent": "South America",
-      "adjacent": [
-        "Venezuela",
-        "Peru",
-        "NAf",
-        "Argentina"
-      ]
-    },
-    "Peru": {
-      "continent": "South America",
-      "adjacent": [
-        "Venezuela",
-        "Brazil",
-        "Argentina"
-      ]
-    },
-    "Argentina": {
-      "continent": "South America",
-      "adjacent": [
-        "Peru",
-        "Brazil"
-      ]
-    },
-    "NAf": {
-      "continent": "Africa",
-      "adjacent": [
-        "Brazil",
-        "WEu",
-        "SEu",
-        "Egypt",
-        "EAf",
-        "Congo"
-      ]
-    },
-    "Scandinavia": {
-      "continent": "Europe",
-      "adjacent": [
-        "Iceland",
-        "GBr",
-        "NEu",
-        "Ukraine"
-      ]
-    },
-    "GBr": {
-      "continent": "Europe",
-      "adjacent": [
-        "Iceland",
-        "Scandinavia",
-        "NEu",
-        "WEu"
-      ]
-    },
-    "NEu": {
-      "continent": "Europe",
-      "adjacent": [
-        "Scandinavia",
-        "GBr",
-        "WEu",
-        "SEu",
-        "Ukraine"
-      ]
-    },
-    "Ukraine": {
-      "continent": "Europe",
-      "adjacent": [
-        "Scandinavia",
-        "NEu",
-        "Ural",
-        "Afghanistan",
-        "MEu",
-        "SEu"
-      ]
-    },
-    "WEu": {
-      "continent": "Europe",
-      "adjacent": [
-        "GBr",
-        "NEu",
-        "SEu",
-        "NAf"
-      ]
-    },
-    "SEu": {
-      "continent": "Europe",
-      "adjacent": [
-        "NEu",
-        "Ukraine",
-        "WEu",
-        "MEu",
-        "Egypt",
-        "NAf"
-      ]
-    },
-    "Ural": {
-      "continent": "Asia",
-      "adjacent": [
-        "Ukraine",
-        "Siberia",
-        "China",
-        "Afghanistan"
-      ]
-    },
-    "Afghanistan": {
-      "continent": "Asia",
-      "adjacent": [
-        "Ukraine",
-        "Ural",
-        "China",
-        "India",
-        "MEu"
-      ]
-    },
-    "MEu": {
-      "continent": "Asia",
-      "adjacent": [
-        "Ukraine",
-        "SEu",
-        "Egypt",
-        "EAf",
-        "Afghanistan",
-        "India"
-      ]
-    },
-    "Egypt": {
-      "continent": "Africa",
-      "adjacent": [
-        "SEu",
-        "NAf",
-        "MEu",
-        "EAf"
-      ]
-    },
-    "EAf": {
-      "continent": "Africa",
-      "adjacent": [
-        "NAf",
-        "Egypt",
-        "MEu",
-        "Congo",
-        "SAf",
-        "Madagascar"
-      ]
-    },
-    "Congo": {
-      "continent": "Africa",
-      "adjacent": [
-        "NAf",
-        "EAf",
-        "SAf"
-      ]
-    },
-    "SAf": {
-      "continent": "Africa",
-      "adjacent": [
-        "EAf",
-        "Congo",
-        "Madagascar"
-      ]
-    },
-    "Madagascar": {
-      "continent": "Africa",
-      "adjacent": [
-        "EAf",
-        "SAf"
-      ]
-    },
-    "Siberia": {
-      "continent": "Asia",
-      "adjacent": [
-        "Ural",
-        "Yakutsk",
-        "Irkutsk",
-        "Mongolia",
-        "China"
-      ]
-    },
-    "China": {
-      "continent": "Asia",
-      "adjacent": [
-        "Ural",
-        "Siberia",
-        "Mongolia",
-        "Afghanistan",
-        "Siam",
-        "India"
-      ]
-    },
-    "Yakutsk": {
-      "continent": "Asia",
-      "adjacent": [
-        "Siberia",
-        "Kamchatka",
-        "Irkutsk"
-      ]
-    },
-    "Irkutsk": {
-      "continent": "Asia",
-      "adjacent": [
-        "Siberia",
-        "Yakutsk"
-      ]
-    },
-    "Mongolia": {
-      "continent": "Asia",
-      "adjacent": [
-        "Siberia",
-        "Japan",
-        "China"
-      ]
-    },
-    "Japan": {
-      "continent": "Asia",
-      "adjacent": [
-        "Mongolia",
-        "Kamchatka"
-      ]
-    },
-    "India": {
-      "continent": "Asia",
-      "adjacent": [
-        "Afghanistan",
-        "China",
-        "MEu",
-        "Siam"
-      ]
-    },
-    "Siam": {
-      "continent": "Asia",
-      "adjacent": [
-        "China",
-        "India",
-        "Indonesia"
-      ]
-    },
-    "Indonesia": {
-      "continent": "Oceania",
-      "adjacent": [
-        "Siam",
-        "NGu",
-        "WAu"
-      ]
-    },
-    "NGu": {
-      "continent": "Oceania",
-      "adjacent": [
-        "Indonesia",
-        "WAu",
-        "EAu"
-      ]
-    },
-    "WAu": {
-      "continent": "Oceania",
-      "adjacent": [
-        "Indonesia",
-        "NGu",
-        "EAu"
-      ]
-    },
-    "EAu": {
-      "continent": "Oceania",
-      "adjacent": [
-        "NGu",
-        "WAu"
-      ]
-    }
+  "Alaska": {
+    "continent": "North America",
+    "adjacent": [
+      "Kamchatka",
+      "Northwest",
+      "Alberta"
+    ]
+  },
+  "Kamchatka": {
+    "continent": "Asia",
+    "adjacent": [
+      "Alaska",
+      "Yakutsk",
+      "Japan"
+    ]
+  },
+  "Northwest": {
+    "continent": "North America",
+    "adjacent": [
+      "Alaska",
+      "Greenland",
+      "Ontario",
+      "Alberta"
+    ]
+  },
+  "Alberta": {
+    "continent": "North America",
+    "adjacent": [
+      "Alaska",
+      "Northwest",
+      "Ontario",
+      "WUS"
+    ]
+  },
+  "Greenland": {
+    "continent": "North America",
+    "adjacent": [
+      "Northwest",
+      "Ontario",
+      "Quebec",
+      "Iceland"
+    ]
+  },
+  "Ontario": {
+    "continent": "North America",
+    "adjacent": [
+      "Northwest",
+      "Greenland",
+      "Alberta",
+      "Quebec",
+      "WUS",
+      "EUS"
+    ]
+  },
+  "Quebec": {
+    "continent": "North America",
+    "adjacent": [
+      "Greenland",
+      "Ontario",
+      "EUS"
+    ]
+  },
+  "Iceland": {
+    "continent": "Europe",
+    "adjacent": [
+      "Greenland",
+      "Scandinavia",
+      "GBr"
+    ]
+  },
+  "WUS": {
+    "continent": "North America",
+    "adjacent": [
+      "Alberta",
+      "Ontario",
+      "EUS",
+      "CAm"
+    ]
+  },
+  "EUS": {
+    "continent": "North America",
+    "adjacent": [
+      "Ontario",
+      "Quebec",
+      "WUS",
+      "CAm"
+    ]
+  },
+  "CAm": {
+    "continent": "North America",
+    "adjacent": [
+      "WUS",
+      "EUS",
+      "Venezuela"
+    ]
+  },
+  "Venezuela": {
+    "continent": "South America",
+    "adjacent": [
+      "CAm",
+      "Brazil",
+      "Peru"
+    ]
+  },
+  "Brazil": {
+    "continent": "South America",
+    "adjacent": [
+      "Venezuela",
+      "Peru",
+      "NAf",
+      "Argentina"
+    ]
+  },
+  "Peru": {
+    "continent": "South America",
+    "adjacent": [
+      "Venezuela",
+      "Brazil",
+      "Argentina"
+    ]
+  },
+  "Argentina": {
+    "continent": "South America",
+    "adjacent": [
+      "Peru",
+      "Brazil"
+    ]
+  },
+  "NAf": {
+    "continent": "Africa",
+    "adjacent": [
+      "Brazil",
+      "WEu",
+      "SEu",
+      "Egypt",
+      "EAf",
+      "Congo"
+    ]
+  },
+  "Scandinavia": {
+    "continent": "Europe",
+    "adjacent": [
+      "Iceland",
+      "GBr",
+      "NEu",
+      "Ukraine"
+    ]
+  },
+  "GBr": {
+    "continent": "Europe",
+    "adjacent": [
+      "Iceland",
+      "Scandinavia",
+      "NEu",
+      "WEu"
+    ]
+  },
+  "NEu": {
+    "continent": "Europe",
+    "adjacent": [
+      "Scandinavia",
+      "GBr",
+      "WEu",
+      "SEu",
+      "Ukraine"
+    ]
+  },
+  "Ukraine": {
+    "continent": "Europe",
+    "adjacent": [
+      "Scandinavia",
+      "NEu",
+      "Ural",
+      "Afghanistan",
+      "MEu",
+      "SEu"
+    ]
+  },
+  "WEu": {
+    "continent": "Europe",
+    "adjacent": [
+      "GBr",
+      "NEu",
+      "SEu",
+      "NAf"
+    ]
+  },
+  "SEu": {
+    "continent": "Europe",
+    "adjacent": [
+      "NEu",
+      "Ukraine",
+      "WEu",
+      "MEu",
+      "Egypt",
+      "NAf"
+    ]
+  },
+  "Ural": {
+    "continent": "Asia",
+    "adjacent": [
+      "Ukraine",
+      "Siberia",
+      "China",
+      "Afghanistan"
+    ]
+  },
+  "Afghanistan": {
+    "continent": "Asia",
+    "adjacent": [
+      "Ukraine",
+      "Ural",
+      "China",
+      "India",
+      "MEu"
+    ]
+  },
+  "MEu": {
+    "continent": "Asia",
+    "adjacent": [
+      "Ukraine",
+      "SEu",
+      "Egypt",
+      "EAf",
+      "Afghanistan",
+      "India"
+    ]
+  },
+  "Egypt": {
+    "continent": "Africa",
+    "adjacent": [
+      "SEu",
+      "NAf",
+      "MEu",
+      "EAf"
+    ]
+  },
+  "EAf": {
+    "continent": "Africa",
+    "adjacent": [
+      "NAf",
+      "Egypt",
+      "MEu",
+      "Congo",
+      "SAf",
+      "Madagascar"
+    ]
+  },
+  "Congo": {
+    "continent": "Africa",
+    "adjacent": [
+      "NAf",
+      "EAf",
+      "SAf"
+    ]
+  },
+  "SAf": {
+    "continent": "Africa",
+    "adjacent": [
+      "EAf",
+      "Congo",
+      "Madagascar"
+    ]
+  },
+  "Madagascar": {
+    "continent": "Africa",
+    "adjacent": [
+      "EAf",
+      "SAf"
+    ]
+  },
+  "Siberia": {
+    "continent": "Asia",
+    "adjacent": [
+      "Ural",
+      "Yakutsk",
+      "Irkutsk",
+      "Mongolia",
+      "China"
+    ]
+  },
+  "China": {
+    "continent": "Asia",
+    "adjacent": [
+      "Ural",
+      "Siberia",
+      "Mongolia",
+      "Afghanistan",
+      "Siam",
+      "India"
+    ]
+  },
+  "Yakutsk": {
+    "continent": "Asia",
+    "adjacent": [
+      "Siberia",
+      "Kamchatka",
+      "Irkutsk"
+    ]
+  },
+  "Irkutsk": {
+    "continent": "Asia",
+    "adjacent": [
+      "Siberia",
+      "Yakutsk"
+    ]
+  },
+  "Mongolia": {
+    "continent": "Asia",
+    "adjacent": [
+      "Siberia",
+      "Japan",
+      "China"
+    ]
+  },
+  "Japan": {
+    "continent": "Asia",
+    "adjacent": [
+      "Mongolia",
+      "Kamchatka"
+    ]
+  },
+  "India": {
+    "continent": "Asia",
+    "adjacent": [
+      "Afghanistan",
+      "China",
+      "MEu",
+      "Siam"
+    ]
+  },
+  "Siam": {
+    "continent": "Asia",
+    "adjacent": [
+      "China",
+      "India",
+      "Indonesia"
+    ]
+  },
+  "Indonesia": {
+    "continent": "Oceania",
+    "adjacent": [
+      "Siam",
+      "NGu",
+      "WAu"
+    ]
+  },
+  "NGu": {
+    "continent": "Oceania",
+    "adjacent": [
+      "Indonesia",
+      "WAu",
+      "EAu"
+    ]
+  },
+  "WAu": {
+    "continent": "Oceania",
+    "adjacent": [
+      "Indonesia",
+      "NGu",
+      "EAu"
+    ]
+  },
+  "EAu": {
+    "continent": "Oceania",
+    "adjacent": [
+      "NGu",
+      "WAu"
+    ]
   }
 }
