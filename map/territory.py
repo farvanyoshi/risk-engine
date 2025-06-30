@@ -1,10 +1,11 @@
 # Defines each node on the graph
 class Territory:
-    def __init__(self, continent, adj):
+    def __init__(self, name, continent, adj):
+        self.name = name
         self.continent = continent
         self.adj = adj
-        self.owner = None
-        self.troops = 0
+        self.owner = 0
+        self.troops = 1
 
     # Changes owner, which also requires changing troops
     def ownerize(self, owner, troops):
