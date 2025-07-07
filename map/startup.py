@@ -41,8 +41,6 @@ def start(players, map):
 
 if __name__ == "__main__":
     players = 2
-    # players = int(input("How many players? (2-5 players): "))
-    # Start game and send map file to game
     if len(sys.argv) > 1:
         start(players, sys.argv[1])
     start(players, "map/world_map.json")
