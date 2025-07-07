@@ -110,15 +110,4 @@ continents = [
 
 continent_bonuses = [3, 7, 5, 5, 2, 2]
 
-troops = [0] * 42
-owned = [0, 1] * 21
-random.shuffle(owned)
-print(owned)
-
-def binator(mat):
-    new = 0
-    for i in range(len(owned)):
-        new += (owned[i] << (42 - i))
-    return new
-
-cards = [0, 0]
+def owned

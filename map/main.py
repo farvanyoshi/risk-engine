@@ -1,11 +1,11 @@
 import random
-import sys
+from gameboard import GameBoard
 from territory import *
 
-global players
+global game
 
 def continentor(player):
-    owned_string = binator(owned)
+    owned_string = binator(game.owned)
     player_bonus = 0
     if not player:
         owned_string = ~owned_string
@@ -14,10 +14,11 @@ def continentor(player):
             player_bonus += bonus
     return bonus
 
-
-def draft(player):
-    drafted = owned.count(player) // 3 + continentor(player)
-    
+def binator(mat):
+            new = 0
+            for i in range(len(game.owned)):
+                new += (game.owned[i] << (42 - i))
+            return new    
 
 # def attack(curr_player, attacking_territory_index, defending_territory_index, attacking_troop_amount):
     # if check_adjacency(attacking_territory_index, defending_territory_index) and (attacking_troop_amount < troops[attacking_troop_amount]) and : 
@@ -26,10 +27,6 @@ def draft(player):
 def check_adjacency(start_territory_index, end_territory_index):
     return adjMatrix[start_territory_index] & (1 << (42 - end_territory_index))
 
-
-
-
-
-
 if __name__ == '__main__':
-    draft(round(random.random()))
+    game = GameBoard()
+    game.move(round(random.random()))
