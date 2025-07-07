@@ -91,4 +91,10 @@ adjMatrix = [
 ]
 
 troops = [0] * 42
-owner = random.choices(range(0, 2), k=42)
+owned = [0, 1] * 21
+random.shuffle(owned)
+print(owned)
+owner = 0
+for i in range(len(owned)):
+    owner += (owned[i] << (42 - i))
+cards = [0, 0]

@@ -1,11 +1,15 @@
 import random
 import sys
-import territory
+from territory import *
 
 global players
 
-def draft():
-    pass # TODO
+def continents(player):
+    pass
+
+def draft(player):
+    drafted = owned.count(player) // 3 + continents(player)
+    
 
 
 
@@ -13,15 +17,6 @@ def draft():
 
 
 
-
-
-
-if __name__ == '__main__':    
-    assigner = list(range(42))
-    random.shuffle(assigner)
-    c = 0
-    for i in assigner:
-        territory.owner[c] = i % 2
-        c += 1
-
-    draft(territory.owner[0])
+if __name__ == '__main__':
+    print(owned)
+    draft(owned[0])
