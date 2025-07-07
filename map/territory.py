@@ -1,3 +1,5 @@
+import random
+
 territory_names = [   
     "Afghanistan",
     "Alaska",
@@ -89,3 +91,4 @@ adjMatrix = [
 ]
 
 troops = [0] * 42
+owner = random.choices(range(0, 2), k=42)

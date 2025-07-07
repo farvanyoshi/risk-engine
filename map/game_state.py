@@ -45,4 +45,4 @@ def fortify(player, receiving_territory, delivering_territory, amount):
         
 
 def transfer_territory(winner_player, loser_player, territory):
-    
+    pass
