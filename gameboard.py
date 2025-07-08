@@ -1,11 +1,12 @@
 import random
 import territory
+import numpy as np
 
-init_troops = [1, 2, 3] * 14
-init_owners = [0, 1] * 21
+init_troops = np.array([1, 2, 3] * 14)
+init_owners = np.array([0, 1] * 21)
 
-random.shuffle(init_troops)
-random.shuffle(init_owners)
+np.random.shuffle(init_troops)
+np.random.shuffle(init_owners)
 
 class GameBoard:
     def __init__(self, player=init_owners[0], troops=init_troops, owners=init_owners):
@@ -13,25 +14,21 @@ class GameBoard:
         self.owners = owners
         self.player = player
         self.cards = [0, 0]
+        self.move()
     
     def continentor(self):
-        owned_string = self.binator()
         player_bonus = 0
-        if not self.player:
-            owned_string = ~owned_string
         for continent, bonus in zip(territory.continents, territory.continent_bonuses):
-            if owned_string & continent == continent:
-                player_bonus += bonus
+            if self.player:
+                if self.owners & continent == continent:
+                    player_bonus += bonus
+            else:
+                if np.bitwise_not(self.owners) & continent == continent:
+                    player_bonus += bonus
         return bonus
 
-    def binator(self):
-        new = 0
-        for i in range(len(self.owners)):
-            new += (self.owners[i] << (42 - i))
-        return new
-
     def move(self):
-        self.deploy(self.player, self.owners.count(self.player) // 3 + self.continentor(self.player))
+        self.deploy(self.owners.count(self.player) // 3 + self.continentor(self.player))
         
     def deploy(self, troops):
         if self.player != 0:
@@ -47,7 +44,7 @@ class GameBoard:
         
         try:
             i = territory.territory_names.index(location)
-            return (1 << i) & self.binator(self.owners[self.player])
+            return np.bitwise_and((1 << i), self.binator(self.owners[self.player]))
 
         except:
             print("Invalid territory")
