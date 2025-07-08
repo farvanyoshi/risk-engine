@@ -90,11 +90,25 @@ adjMatrix = [
     0b000000000000000001010000000000000100000000
 ]
 
-troops = [0] * 42
-owned = [0, 1] * 21
-random.shuffle(owned)
-print(owned)
-owner = 0
-for i in range(len(owned)):
-    owner += (owned[i] << (42 - i))
-cards = [0, 0]
+continent_names = [
+    "Africa",
+    "Asia",
+    "Europe",
+    "North America",
+    "Oceania",
+    "South America"
+]
+
+continents = [
+    0b000000011001000000001000100000000010000000,
+    0b100000100000000101110110000000001100100001,
+    0b000000000000101000000000010000110001000100,
+    0b011001000010010000000000001101000000000010,
+    0b000000000100000010000001000000000000001000,
+    0b000110000000000000000000000010000000010000
+]
+
+continent_bonuses = [3, 7, 5, 5, 2, 2]
+
+def check_adjacency(start_territory_index, end_territory_index):
+    return adjMatrix[start_territory_index] & (1 << (42 - end_territory_index))
