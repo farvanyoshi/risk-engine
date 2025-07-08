@@ -110,4 +110,5 @@ continents = [
 
 continent_bonuses = [3, 7, 5, 5, 2, 2]
 
-def owned
+def check_adjacency(start_territory_index, end_territory_index):
+    return adjMatrix[start_territory_index] & (1 << (42 - end_territory_index))
