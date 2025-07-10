@@ -12,7 +12,7 @@ class GameBoard:
     def __init__(self, player=init_owners[0], troops=init_troops, owners=init_owners):
         self.troops = troops
         self.owners = owners
-        self.current_player = player
+        self.current_player = 1 # Use for testing
         self.cards = [0, 0]
     
     def won(self):
@@ -37,32 +37,53 @@ class GameBoard:
         return player_bonus
 
     def move(self):
-        self.deploy(np.count_nonzero(self.owners == self.current_player) // 3 + self.continentor(self.current_player))
+        self.deploy(np.count_nonzero(self.owners == self.current_player) // 3 + self.continentor())
         self.attack()
         
     def deploy(self, drafted):
         if self.current_player != 0: # fix later for ai
+
+            # Allow the player to draft to multiple places on the same turn
             while drafted:
-                location = input(f"You have {drafted} troops drafted. Where are you deploying?")
+                location = input(f"You have {drafted} troops drafted. Where are you deploying?\n")
+
                 i = territory.indexer(location)
+                if i == -1:
+                    print("Invalid territory.")
+                    continue
+
                 if self.owners[i] == self.current_player:
-                    placing = int(input("How many are you placing? Enter just an integer."))
-                    if placing > drafted:
-                        print("You don't have that many troops!")
-                        continue
+                    placing = int(input("How many are you placing? Enter just an integer.\n"))
+                    while placing > drafted:
+                        placing = input(f"Not enough troops for that. Put in a number less than {self.troops} or nothing to go back.\n")
                     self.troops[i] += placing
                     drafted -= placing
-                    print(f"{drafted} troops placed in {location}.")
+                    print(f"{placing} troops placed in {location}.")
                 else:
                     print("You don't own that territory!")
 
-    def attack():
-        start = -1
-        while start < 0:
-            start = territory.indexer(input("Where would you like to attack from?"))
+    def attack(self):
+        start = ''
+        targets = []
+        while start == '':
+            start = input("Where would you like to attack from? (enter nothing to see your owned territories)")
+
+            # Write out all of the territories owned by the player
+            if start == '':
+                for i, owned in enumerate(self.owners):
+                    if owned: 
+                        print(territory.territory_names[i])
+            
+            targets = self.attackable(start)
+            if targets == None:
+                print("There is nothing you can attack from here.")
+                start = ''
         
-    def attackble():
-        pass
+
+
+        
+    def attackable(terr):
+        territory.adjMatrix[terr]
     
     def battle():
         pass
