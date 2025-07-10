@@ -24,17 +24,17 @@ class GameBoard:
             return True
         return False
 
-    def move(self):
-        self.player_draft(np.count_nonzero(self.owners == self.current_player) // 3 + territory.continent_bonus(self.current_player, self.owners))
+    def initiate_turn(self):
+        self.player_draft(max(np.count_nonzero(self.owners == self.current_player) // 3, 3) + territory.continent_bonus(self.current_player, self.owners))
         self.prompt_attack()
     
 
     def player_draft(self, drafted):
         if self.current_player != 0: # fix later for ai
-
+            print("Owned territories:\n", [territory.territory_names[i] for i, owned in enumerate(self.owners) if owned])
             # Allow the player to draft to multiple places on the same turn
             while drafted:
-                location = input(f"You have {drafted} troops drafted. Where are you deploying: ")
+                location = input(f"You have {drafted} troops to deploy. Where are you deploying? ")
 
                 i = territory.indexer(location)
                 if i == -1:
@@ -44,7 +44,7 @@ class GameBoard:
                 if self.owners[i] == self.current_player:
                     placing = int(input("How many are you placing? Enter just an integer: "))
                     while placing > drafted:
-                        placing = input(f"Not enough troops for that. Put in a number less than {self.troop_array} or nothing to go back: ")
+                        placing = input(f"Not enough troops for that. Put in a number less than {drafted} or nothing to go back: ")
                     self.troop_array[i] += placing
                     drafted -= placing
                     print(f"{placing} troops placed in {location}.")
@@ -72,6 +72,8 @@ class GameBoard:
                 print("There is nothing you can attack from here.")
                 start = ''
         
+        target_names = [territory.territory_names[i] for i, owned in enumerate(targets) if owned]
+        
     def attackable(self, terr):
         if self.player == 1:
             return np.bitwise_and(territory.adjMatrix[terr], np.bitwise_not(self.owners))
@@ -87,3 +89,6 @@ class GameBoard:
         else:
             self.troop_array[end] -= attacking_troops
             self.troop_array[start] -= attacking_troops
+
+    def fortify(self):
+        pass
