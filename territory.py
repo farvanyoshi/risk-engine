@@ -108,7 +108,7 @@ continents = np.array((
     (0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)
 ), dtype = bool)
 
-continent_bonuses = (3, 7, 5, 5, 2, 2)
+continent_bonuses = np.array([3, 7, 5, 5, 2, 2])
 
 def check_adjacency(start_territory_index, end_territory_index):
     return adjMatrix[start_territory_index][end_territory_index]
