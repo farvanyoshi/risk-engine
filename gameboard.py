@@ -36,7 +36,7 @@ class GameBoard:
                     player_bonus += territory.continent_bonuses[i]
         return player_bonus
 
-    def move(self):
+    def player_move(self):
         self.deploy(np.count_nonzero(self.owners == self.current_player) // 3 + self.continentor())
         self.attack()
         
@@ -62,6 +62,23 @@ class GameBoard:
                 else:
                     print("You don't own that territory!")
 
+    def prompt_attack(self):
+        start = ''
+        targets = []
+        while start == '':
+            start = input("Where would you like to attack from? (enter nothing to see your owned territories)")
+
+            # Write out all of the territories owned by the player
+            if start == '':
+                for i, owned in enumerate(self.owners):
+                    if owned: 
+                        print(territory.territory_names[i])
+            
+            targets = self.attackable(start)
+            if targets == None:
+                print("There is nothing you can attack from here.")
+                start = ''
+
     def attack(self):
         start = ''
         targets = []
@@ -79,12 +96,25 @@ class GameBoard:
                 print("There is nothing you can attack from here.")
                 start = ''
         
+    def attackable(self, terr):
+        np.bitwise_and(territory.adjMatrix[terr], np.bitwise_not(self.owners))
+
+
+
+
+
 
 
         
-    def attackable(terr):
-        territory.adjMatrix[terr]
-    
-    def battle():
-        pass
+    def battle(start, end, troops):
+        if territory.check_adjacency(attacking_territory_index, defending_territory_index) and (attacking_troop_amount < troops[attacking_troop_amount]) and (owned[attacking_territory_index] == curr_player) and (owner[defending_territory_index] != curr_player):
+            if attacking_troop_amount > troops[defending_territory_index]:
+                troops[defending_territory_index] = -(troops[defending_territory_index]-attacking_troop_amount)
+                owned[defending_territory_index] = curr_player
+            elif attacking_troop_amount == troops[defending_territory_index]:
+                troops[defending_territory_index] = 1
+            else:
+                troops[defending_territory_index] -= attacking_troop_amount
+            troops[attacking_territory_index] -= attacking_troop_amount
 
+        
