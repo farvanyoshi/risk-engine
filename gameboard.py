@@ -2,15 +2,15 @@ import random
 import territory
 import numpy as np
 
-init_troops = np.array([1, 2, 3] * 14)
+init_troop_array = np.array([1, 2, 3] * 14)
 init_owners = np.array([0, 1] * 21, dtype = bool)
 
-np.random.shuffle(init_troops)
+np.random.shuffle(init_troop_array)
 np.random.shuffle(init_owners)
 
 class GameBoard:
-    def __init__(self, player=init_owners[0], troops=init_troops, owners=init_owners):
-        self.troops = troops
+    def __init__(self, player=init_owners[0], troop_array=init_troop_array, owners=init_owners):
+        self.troop_array = troop_array
         self.owners = owners
         self.current_player = 1 # Use for testing
         self.cards = [0, 0]
@@ -24,28 +24,17 @@ class GameBoard:
             return True
         return False
 
-    def continentor(self):
-        player_bonus = 0
-        reverse_owners = np.bitwise_not(self.owners)
-        for i, continent in enumerate(territory.continents):
-            if self.current_player:
-                if (np.bitwise_and(self.owners, continent) == continent).all():
-                    player_bonus += territory.continent_bonuses[i]
-            else:
-                if (np.bitwise_and(reverse_owners, continent) == continent).all():
-                    player_bonus += territory.continent_bonuses[i]
-        return player_bonus
+    def move(self):
+        self.player_draft(np.count_nonzero(self.owners == self.current_player) // 3 + territory.continent_bonus(self.current_player, self.owners))
+        self.prompt_attack()
+    
 
-    def player_move(self):
-        self.deploy(np.count_nonzero(self.owners == self.current_player) // 3 + self.continentor())
-        self.attack()
-        
-    def deploy(self, drafted):
+    def player_draft(self, drafted):
         if self.current_player != 0: # fix later for ai
 
             # Allow the player to draft to multiple places on the same turn
             while drafted:
-                location = input(f"You have {drafted} troops drafted. Where are you deploying?\n")
+                location = input(f"You have {drafted} troops drafted. Where are you deploying: ")
 
                 i = territory.indexer(location)
                 if i == -1:
@@ -53,40 +42,27 @@ class GameBoard:
                     continue
 
                 if self.owners[i] == self.current_player:
-                    placing = int(input("How many are you placing? Enter just an integer.\n"))
+                    placing = int(input("How many are you placing? Enter just an integer: "))
                     while placing > drafted:
-                        placing = input(f"Not enough troops for that. Put in a number less than {self.troops} or nothing to go back.\n")
-                    self.troops[i] += placing
+                        placing = input(f"Not enough troops for that. Put in a number less than {self.troop_array} or nothing to go back: ")
+                    self.troop_array[i] += placing
                     drafted -= placing
                     print(f"{placing} troops placed in {location}.")
                 else:
                     print("You don't own that territory!")
 
+    
+
     def prompt_attack(self):
         start = ''
         targets = []
         while start == '':
-            start = input("Where would you like to attack from? (enter nothing to see your owned territories)")
+            start = input("Where would you like to attack from? (hit the enter key to skip your attack phase, or help to see all your territories)")
 
             # Write out all of the territories owned by the player
             if start == '':
-                for i, owned in enumerate(self.owners):
-                    if owned: 
-                        print(territory.territory_names[i])
-            
-            targets = self.attackable(start)
-            if targets == None:
-                print("There is nothing you can attack from here.")
-                start = ''
-
-    def attack(self):
-        start = ''
-        targets = []
-        while start == '':
-            start = input("Where would you like to attack from? (enter nothing to see your owned territories)")
-
-            # Write out all of the territories owned by the player
-            if start == '':
+                return
+            if start == 'help':
                 for i, owned in enumerate(self.owners):
                     if owned: 
                         print(territory.territory_names[i])
@@ -97,24 +73,17 @@ class GameBoard:
                 start = ''
         
     def attackable(self, terr):
-        np.bitwise_and(territory.adjMatrix[terr], np.bitwise_not(self.owners))
-
-
-
-
-
-
-
+        if self.player == 1:
+            return np.bitwise_and(territory.adjMatrix[terr], np.bitwise_not(self.owners))
+        else:
+            return np.bitwise_and(territory.adjMatrix[terr], self.owners)
         
-    def battle(start, end, troops):
-        if territory.check_adjacency(attacking_territory_index, defending_territory_index) and (attacking_troop_amount < troops[attacking_troop_amount]) and (owned[attacking_territory_index] == curr_player) and (owner[defending_territory_index] != curr_player):
-            if attacking_troop_amount > troops[defending_territory_index]:
-                troops[defending_territory_index] = -(troops[defending_territory_index]-attacking_troop_amount)
-                owned[defending_territory_index] = curr_player
-            elif attacking_troop_amount == troops[defending_territory_index]:
-                troops[defending_territory_index] = 1
-            else:
-                troops[defending_territory_index] -= attacking_troop_amount
-            troops[attacking_territory_index] -= attacking_troop_amount
-
-        
+    def battle(self, start, end, attacking_troops):
+        if attacking_troops > self.troop_array[end]:
+            self.troop_array[end] = -(self.troop_array[end]-attacking_troops)
+            self.owners[end] = self.current_player
+        elif attacking_troops == self.troop_array[end]:
+            self.troop_array[end] = 1
+        else:
+            self.troop_array[end] -= attacking_troops
+            self.troop_array[start] -= attacking_troops

@@ -119,3 +119,15 @@ def indexer(location):
     except:
         print("Invalid territory")
         return -1
+    
+def continent_bonus(player, owners):
+    player_bonus = 0
+    reverse_owners = np.bitwise_not(owners)
+    for i, continent in enumerate(continents):
+        if player:
+            if (np.bitwise_and(owners, continent) == continent).all():
+                player_bonus += continent_bonuses[i]
+        else:
+            if (np.bitwise_and(reverse_owners, continent) == continent).all():
+                player_bonus += continent_bonuses[i]
+    return player_bonus
