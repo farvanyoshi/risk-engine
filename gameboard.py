@@ -16,7 +16,7 @@ class GameBoard:
         self.current_player = player or 1 # Use for testing
         self.cards = [0, 0]
     
-    def won(self):
+    def is_won(self):
         if np.all(self.owners == 0):
             print("The AI has won the game!")
             return True
