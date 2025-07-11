@@ -1,6 +1,6 @@
 import numpy as np
 
-territory_names = map(str.lower, [ 
+territory_names = [ 
     "Afghanistan",
     "Alaska",
     "Alberta",
@@ -43,7 +43,7 @@ territory_names = map(str.lower, [
     "Western Europe",
     "Western United States",
     "Yakutsk"
-])
+]
 
 adjMatrix = np.array((
     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
@@ -126,6 +126,9 @@ def check_adjacency(start_territory_index, end_territory_index):
     return adjMatrix[start_territory_index][end_territory_index]
 
 def indexer(location):
+    if location == None:
+        return -1
+    
     try:
         return territory_names.index(location)
     except:
@@ -153,3 +156,6 @@ def total_connections(terr, owners):
                     neighbors = np.bitwise_or(neighbors, np.bitwise_and(adjMatrix[i], owners))
             unchecked = np.bitwise_xor(checked, neighbors)
         return checked
+
+def capitalize_territory(terr: str):
+    return ' '.join([str.upper(i[0]) + str.lower(i[1:]) for i in terr.split(' ')]) if len(terr) > 2 else None

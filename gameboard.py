@@ -30,27 +30,31 @@ class GameBoard:
         + territory.continent_bonus(self.current_player, self.owners)
 
         if self.current_player == 1:
-            player.prompt_draft(drafted)
-            player.prompt_attack()
-            player.prompt_forify()
+            player.draft(drafted, self)
+            player.attack(self)
+            player.fortify()
         elif self.current_player == 0:
-            engine.draft_attack_calculation(drafted)
-            engine.fortify()
+            # engine.draft_attack_calculation(drafted)
+            # engine.fortify()
+            self.current_player = 1
         
         return
-        
+    
+    def deploy(self, troops, location):
+        self.owners[location] += troops
+
     def battle(self, start, end, attacking_troops):
+        self.troop_array[start] -= attacking_troops
         if attacking_troops > self.troop_array[end]:
-            self.troop_array[end] = -(self.troop_array[end]-attacking_troops)
+            self.troop_array[end] = - (self.troop_array[end] - attacking_troops)
             self.owners[end] = self.current_player
         elif attacking_troops == self.troop_array[end]:
             self.troop_array[end] = 1
         else:
             self.troop_array[end] -= attacking_troops
-            self.troop_array[start] -= attacking_troops
 
     def fortify(self, start, end, transferring_troops):
-        connections = self.total_connections(start)
+        connections = territory.total_connections(start, self.owners)
         if end in connections and transferring_troops < self.troop_array[start]:
             self.troop_array[start] -= transferring_troops
             self.troop_array[end] += transferring_troops
