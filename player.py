@@ -37,7 +37,7 @@ def attack(board):
     start = ''
     targets = []
     while start == '':
-        start = input("Where would you like to attack from? (hit the enter key to skip your attack phase, or help to see all your territories' troops) ").lower()
+        start = territory.capitalize_territory(input("Where would you like to attack from? (hit the enter key to skip the attack, or help to see all your territories' troops) "))
 
         if start == '':
             return
@@ -45,14 +45,27 @@ def attack(board):
             print(zip(territory.territory_names, board.troop_array))
             continue
         
-        targets = territory.attackable(territory.indexer(start), board.owners, 1)
+        possible_targets = territory.attackable(territory.indexer(start), board.owners, 1)
 
-        if targets == None:
+        if possible_targets == None:
             start = ''
             continue
-        if all(targets == 0):
+        if all(possible_targets == 0):
             print("Cannot attack from there. Place in another territory")
             continue
     
         print("Possible targets:\n", [(territory.territory_names[i], board.troop_array[i]) for i, owned in enumerate(targets) if owned])
-
+        final_target = ''
+        while not final_target:
+            final_target = territory.capitalize_territory(input("What territory are you attacking? "))
+            attacking_troops = 0
+            while not attacking_troops:
+                try:
+                    attacking_troops = int(input("How many troops? "))
+                except ValueError:
+                    attacking_troops = 0
+                    print("Please enter a positive integer.")
+                    continue
+            if final_target in possible_targets:
+                board.battle(territory.indexer(start), territory.indexer(final_target), attacking_troops)
+            

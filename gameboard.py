@@ -46,8 +46,8 @@ class GameBoard:
     def battle(self, start, end, attacking_troops):
         self.troop_array[start] -= attacking_troops
         if attacking_troops > self.troop_array[end]:
-            self.troop_array[end] = - (self.troop_array[end] - attacking_troops)
-            self.owners[end] = self.current_player
+            self.troop_array[end] = attacking_troops - self.troop_array[end]
+            self.owners[end] = not self.owners[end]
         elif attacking_troops == self.troop_array[end]:
             self.troop_array[end] = 1
         else:
