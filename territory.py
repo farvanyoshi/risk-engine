@@ -1,6 +1,6 @@
 import numpy as np
 
-territory_names = ( 
+territory_names = map(str.lower, [ 
     "Afghanistan",
     "Alaska",
     "Alberta",
@@ -31,7 +31,7 @@ territory_names = (
     "Ontario",
     "Peru",
     "Quebec",
-    "Ukraine",
+    "Russia",
     "Scandinavia",
     "Siam",
     "Siberia",
@@ -43,7 +43,7 @@ territory_names = (
     "Western Europe",
     "Western United States",
     "Yakutsk"
-)
+])
 
 adjMatrix = np.array((
     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
@@ -110,16 +110,6 @@ continents = np.array((
 
 continent_bonuses = np.array([3, 7, 5, 5, 2, 2])
 
-def check_adjacency(start_territory_index, end_territory_index):
-    return adjMatrix[start_territory_index][end_territory_index]
-
-def indexer(location):
-    try:
-        return territory_names.index(location)
-    except:
-        print("Invalid territory")
-        return -1
-    
 def continent_bonus(player, owners):
     player_bonus = 0
     reverse_owners = np.bitwise_not(owners)
@@ -131,3 +121,35 @@ def continent_bonus(player, owners):
             if (np.bitwise_and(reverse_owners, continent) == continent).all():
                 player_bonus += continent_bonuses[i]
     return player_bonus
+
+def check_adjacency(start_territory_index, end_territory_index):
+    return adjMatrix[start_territory_index][end_territory_index]
+
+def indexer(location):
+    try:
+        return territory_names.index(location)
+    except:
+        print("Invalid territory")
+        return -1
+
+def attackable(terr, owner, current_player):
+    if terr == -1:
+        return None
+    
+    if current_player == 1:
+        return np.bitwise_and(adjMatrix[terr], np.bitwise_not(owner))
+    else:
+        return np.bitwise_and(adjMatrix[terr], owner)
+    
+def total_connections(terr, owners):
+        checked = np.zeros(42, dtype = bool)
+        neighbors = np.zeros(42, dtype = bool)
+        neighbors[terr] = 1
+        unchecked = np.bitwise_xor(checked, neighbors)
+        while np.any(unchecked):
+            for i, owned in enumerate(unchecked):
+                if owned:
+                    checked[i] = 1
+                    neighbors = np.bitwise_or(neighbors, np.bitwise_and(adjMatrix[i], owners))
+            unchecked = np.bitwise_xor(checked, neighbors)
+        return checked
