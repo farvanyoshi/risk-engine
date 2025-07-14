@@ -3,12 +3,32 @@ import territory
 
 def draft(drafted, board):
     # List out all named territories to the player
-    print("Owned territories & troop counts:")
-    for i, owned in enumerate(board.owners):
-        if owned:
-            print(territory.capitalize_territory(territory.territory_names[i]) + ', ' + str(board.troop_array[i]))
-    for i, continent in enumerate(territory.continents):
-        print(sum(np.bitwise_and(continent, board.owners)), "of the", sum(continent), "territories in", territory.continent_names[i])
+    opponent_territories = []
+    print("Your owned territories & troop counts:")
+    if board.current_player:
+        for i, owned in enumerate(board.owners):
+            if owned:
+                print(territory.capitalize_territory(territory.territory_names[i]) + ', ' + str(board.armies[i]))
+            else:
+                opponent_territories.append((territory.territory_names[i], int(board.armies[i])))
+    else:
+        for i, owned in enumerate(board.owners):
+            if not owned:
+                print(territory.capitalize_territory(territory.territory_names[i]) + ', ' + str(board.armies[i]))
+            else:
+                opponent_territories.append((territory.territory_names[i], int(board.armies[i])))
+
+    
+    print("\nOpponent's owned territories & troop counts:")
+    for i, j in opponent_territories:
+        print(i + ',', j)
+
+    if board.current_player:
+        for i, continent in enumerate(territory.continents):
+            print(sum(np.bitwise_and(continent, board.owners)), "of the", sum(continent), "territories in", territory.continent_names[i])
+    else:
+        for i, continent in enumerate(territory.continents):
+            print(sum(np.bitwise_and(continent, np.bitwise_not(board.owners))), "of the", sum(continent), "territories in", territory.continent_names[i])
     
     # Allow the player to draft to multiple places on the same turn
     while drafted:
@@ -27,7 +47,7 @@ def draft(drafted, board):
                 continue
             
             # placing == -1 is an error handling value the input is not valid
-            while placing > drafted or placing == -1:
+            while placing > drafted or placing < 0:
                 try:
                     placing = int(input(f"Invalid number of troops. Enter a number between 0 and {drafted}: "))
                 except ValueError:
@@ -51,7 +71,7 @@ def attack(board):
             return
         elif start_index == 'help':
             start_index == ''
-            print(list(zip(territory.territory_names, board.troop_array)))
+            print(list(zip(territory.territory_names, board.armies)))
             continue
         
         start_index = territory.indexer(start_index)
@@ -65,7 +85,7 @@ def attack(board):
             print("Cannot attack from there. Choose another territory")
             continue
     
-        print("Possible targets:\n", [(territory.territory_names[i], board.troop_array[i]) for i, owned in enumerate(targets) if owned])
+        print("Possible targets:\n", [(territory.territory_names[i], board.armies[i]) for i, owned in enumerate(targets) if owned])
         final_target = ''
         while not final_target:
             final_target = input("What territory are you attacking? ").lower()
@@ -92,7 +112,7 @@ def fortify(board):
         continue
 
     # List out all possiblities to the player
-    connections = territory.total_connections(start_index, board.owners)
+    connections = territory.total_connections(start_index, board.owners, board.current_player)
     print(f"You can fortify:\n {connections}")
 
     end = input("Where would you like to fortify? ")
@@ -103,7 +123,7 @@ def fortify(board):
     end_index = territory.indexer(end)
 
     placing = -1
-    max_troops = board.troop_array[start_index] - 1
+    max_troops = board.armies[start_index] - 1
     while placing:
         try:
             placing = int(input(f"How many troops are you sending? You have {max_troops} troops available to fortify. "))
