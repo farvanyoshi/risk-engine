@@ -123,7 +123,7 @@ def continent_bonus(player, owners):
         else:
             if (np.bitwise_and(reverse_owners, continent) == continent).all():
                 player_bonus += continent_bonuses[i]
-    return player_bonus
+    return int(player_bonus)
 
 def check_adjacency(start_territory_index, end_territory_index):
     return adjMatrix[start_territory_index][end_territory_index]
@@ -160,5 +160,5 @@ def total_connections(terr, owners, player):
             unchecked = np.bitwise_xor(checked, neighbors)
         return checked
 
-def capitalize_territory(terr: str):
+def capitalize_territory(terr):
     return ' '.join([str.upper(i[0]) + str.lower(i[1:]) for i in terr.split(' ')]) if len(terr) > 2 else None
