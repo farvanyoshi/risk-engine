@@ -33,11 +33,13 @@ class GameBoard:
             player.draft(drafted, self)
             player.attack(self)
             player.fortify()
+            self.current_player = 0
         elif self.current_player == 0:
             # engine.draft_attack_calculation(drafted)
             # engine.fortify()
+            player.draft(drafted, self)
+            player.attack(self)
             self.current_player = 1
-        
         return
     
     def deploy(self, troops, location):
