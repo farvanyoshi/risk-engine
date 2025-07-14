@@ -26,8 +26,8 @@ class GameBoard:
         return False
 
     def initiate_turn(self):
-        drafted = max(np.count_nonzero(self.owners == self.current_player) // 3, 3) 
-        + territory.continent_bonus(self.current_player, self.owners)
+        drafted = int(max(np.count_nonzero(self.owners == self.current_player) // 3, 3) 
+        + territory.continent_bonus(self.current_player, self.owners))
 
         if self.current_player == 1:
             player.draft(drafted, self)
@@ -39,6 +39,7 @@ class GameBoard:
             # engine.fortify()
             player.draft(drafted, self)
             player.attack(self)
+            player.fortify()
             self.current_player = 1
         return
     
@@ -56,7 +57,5 @@ class GameBoard:
             self.troop_array[end] -= attacking_troops
 
     def fortify(self, start, end, transferring_troops):
-        connections = territory.total_connections(start, self.owners)
-        if end in connections and transferring_troops < self.troop_array[start]:
-            self.troop_array[start] -= transferring_troops
-            self.troop_array[end] += transferring_troops
+        self.troop_array[start] -= transferring_troops
+        self.troop_array[end] += transferring_troops

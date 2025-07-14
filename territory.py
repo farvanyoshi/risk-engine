@@ -134,10 +134,7 @@ def indexer(location):
     except:
         return -1
 
-def attackable(terr, owner, current_player):
-    if terr == -1:
-        return None
-    
+def attackable(terr, owner, current_player):    
     if current_player == 1:
         return np.bitwise_and(adjMatrix[terr], np.bitwise_not(owner))
     else:
