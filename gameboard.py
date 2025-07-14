@@ -3,17 +3,18 @@ import numpy as np
 import player
 import territory
 
+# Create random troops and owners to start the game for two players
 init_troop_array = np.array([1, 2, 3] * 14)
 init_owners = np.array([0, 1] * 21, dtype = bool)
-
 np.random.shuffle(init_troop_array)
 np.random.shuffle(init_owners)
 
+# Contains the common game code to both the player and AI
 class GameBoard:
-    def __init__(self, player=init_owners[0], troop_array=init_troop_array, owners=init_owners):
+    def __init__(self, player = init_owners[0], troop_array=init_troop_array, owners=init_owners):
         self.troop_array = troop_array
         self.owners = owners
-        self.current_player = player or 1 # Use for testing
+        self.current_player: int = player
         self.cards = [0, 0]
     
     def is_won(self):
@@ -26,6 +27,7 @@ class GameBoard:
         return False
 
     def initiate_turn(self):
+        print("It is now player " + str(self.current_player) + "'s turn" )
         drafted = int(max(np.count_nonzero(self.owners == self.current_player) // 3, 3) 
         + territory.continent_bonus(self.current_player, self.owners))
 

@@ -45,6 +45,7 @@ territory_names = [
     "yakutsk"
 ]
 
+# Stores the adjacencies between all the territories. The order is the same as that of the territory_names index.
 adjMatrix = np.array((
     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -99,6 +100,7 @@ continent_names = [
     "South America"
 ]
 
+# Stores the adjacencies between all the continents. The order is the same as that of the continent_names index.
 continents = np.array((
     (0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
     (1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1),
@@ -110,6 +112,7 @@ continents = np.array((
 
 continent_bonuses = np.array([3, 7, 5, 5, 2, 2])
 
+# Calculates bonus per continent
 def continent_bonus(player, owners):
     player_bonus = 0
     reverse_owners = np.bitwise_not(owners)
@@ -125,6 +128,7 @@ def continent_bonus(player, owners):
 def check_adjacency(start_territory_index, end_territory_index):
     return adjMatrix[start_territory_index][end_territory_index]
 
+# Converts a territory name to its index
 def indexer(location):
     if location == None:
         return -1
@@ -140,7 +144,10 @@ def attackable(terr, owner, current_player):
     else:
         return np.bitwise_and(adjMatrix[terr], owner)
     
-def total_connections(terr, owners):
+# Finds all territories owned by the player (flip the values for the AI)
+def total_connections(terr, owners, player):
+        if player == 0:
+            owners = np.bitwise_not(owners)
         checked = np.zeros(42, dtype = bool)
         neighbors = np.zeros(42, dtype = bool)
         neighbors[terr] = 1

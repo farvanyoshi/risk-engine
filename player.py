@@ -2,6 +2,7 @@ import numpy as np
 import territory
 
 def draft(drafted, board):
+    # List out all named territories to the player
     print("Owned territories & troop counts:")
     for i, owned in enumerate(board.owners):
         if owned:
@@ -17,14 +18,15 @@ def draft(drafted, board):
         if i == -1:
             print("Invalid territory")
             continue
-
+        
         if board.owners[i]:
             try:
                 placing = int(input("How many are you placing? Enter just an integer: "))
             except ValueError:
                 print("Please enter a positive integer.")
                 continue
-
+            
+            # placing == -1 is an error handling value the input is not valid
             while placing > drafted or placing == -1:
                 try:
                     placing = int(input(f"Invalid number of troops. Enter a number between 0 and {drafted}: "))
@@ -57,9 +59,10 @@ def attack(board):
         if start_index == -1:
             continue
         
+        # Calculate all targets and show them to the player
         possible_targets = territory.attackable(start_index, board.owners, 1)
         if np.all(possible_targets == 0):
-            print("Cannot attack from there. Place in another territory")
+            print("Cannot attack from there. Choose another territory")
             continue
     
         print("Possible targets:\n", [(territory.territory_names[i], board.troop_array[i]) for i, owned in enumerate(targets) if owned])
@@ -88,8 +91,9 @@ def fortify(board):
         start_index = territory.indexer(input("Not a valid territory. Please input another place: ").lower())
         continue
 
+    # List out all possiblities to the player
     connections = territory.total_connections(start_index, board.owners)
-    print(f"Your options for fortifying are:\n {connections}")
+    print(f"You can fortify:\n {connections}")
 
     end = input("Where would you like to fortify? ")
     while end not in connections:
@@ -99,19 +103,19 @@ def fortify(board):
     end_index = territory.indexer(end)
 
     placing = -1
-    troops = board.troop_array[start_index] - 1
+    max_troops = board.troop_array[start_index] - 1
     while placing:
         try:
-            placing = int(input(f"How many troops are you sending? You have {troops} troops available to fortify. "))
+            placing = int(input(f"How many troops are you sending? You have {max_troops} troops available to fortify. "))
         except ValueError:
             placing = -1
             print("Please enter a positive integer.")
             continue
 
-        if placing > troops:
+        if placing > max_troops:
             placing = -1
             print("You don't have that many troops.")
             continue  
 
-    board.fortify(start_index, end_index, troops)
+    board.fortify(start_index, end_index, max_troops)
     
