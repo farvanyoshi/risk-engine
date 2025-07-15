@@ -37,7 +37,7 @@ class GameBoard:
             player.fortify(self)
             self.current_player = 0
         elif self.current_player == 0:
-            # engine.draft_attack_calculation(drafted)
+            # engine.draft(drafted)
             # engine.fortify()
             player.draft(drafted, self)
             player.attack(self)

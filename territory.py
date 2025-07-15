@@ -115,13 +115,12 @@ continent_bonuses = np.array([3, 7, 5, 5, 2, 2])
 # Calculates bonus per continent
 def continent_bonus(player, owners):
     player_bonus = 0
-    reverse_owners = np.bitwise_not(owners)
     for i, continent in enumerate(continents):
         if player:
-            if (np.bitwise_and(owners, continent) == continent).all():
+            if ((owners & continent) == continent).all():
                 player_bonus += continent_bonuses[i]
         else:
-            if (np.bitwise_and(reverse_owners, continent) == continent).all():
+            if (~owners & continent == continent).all():
                 player_bonus += continent_bonuses[i]
     return int(player_bonus)
 
@@ -139,25 +138,25 @@ def indexer(location):
         return -1
 
 def attackable(terr, owner, current_player):    
-    if current_player == 1:
-        return np.bitwise_and(adjMatrix[terr], np.bitwise_not(owner))
+    if current_player == 0:
+        return adjMatrix[terr] & ~owner
     else:
-        return np.bitwise_and(adjMatrix[terr], owner)
+        return adjMatrix[terr] & owner
     
 # Finds all territories owned by the player (flip the values for the AI)
 def total_connections(terr, owners, player):
         if player == 0:
-            owners = np.bitwise_not(owners)
+            owners = ~owners
         checked = np.zeros(42, dtype = bool)
         neighbors = np.zeros(42, dtype = bool)
         neighbors[terr] = 1
-        unchecked = np.bitwise_xor(checked, neighbors)
+        unchecked = checked ^ neighbors
         while np.any(unchecked):
             for i, owned in enumerate(unchecked):
                 if owned:
                     checked[i] = 1
-                    neighbors = np.bitwise_or(neighbors, np.bitwise_and(adjMatrix[i], owners))
-            unchecked = np.bitwise_xor(checked, neighbors)
+                    neighbors = neighbors | (adjMatrix[i] & owners) 
+            unchecked = checked ^ neighbors
         return checked
 
 def capitalize_territory(terr):

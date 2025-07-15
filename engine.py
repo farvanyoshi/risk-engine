@@ -1,6 +1,11 @@
+import numpy as np
+import territory
 '''
 Steps:
-- Implement the draft phase
+- Implement the draft phase (assume best places to place territories are those)
+    - Calculate threat from all neighboring enemy troops
+    - Divide by number of troops in the territory to get threat ratio
+    - Normalize ratio and add troops to greatest value
 - Implement the attack phase
 - Implement the fortify phase
 
@@ -14,3 +19,9 @@ Steps:
     - assign every bordering territory all the draft troops, and find how to reach the most score
 '''
 
+def draft(board):
+    for i, owned in enumerate(board.owners):
+        if not owned:
+            pass
+        else:
+            pass

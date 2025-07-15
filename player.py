@@ -65,7 +65,12 @@ def attack(board):
             start = ''
             continue
     
-        print("Possible targets:\n", [(territory.territory_names[i], int(board.armies[i])) for i, owned in enumerate(possible_targets) if owned != board.current_player])
+        target_names = ((territory.capitalize_territory(territory.territory_names[i]), int(board.armies[i])) for i, owned in enumerate(possible_targets) if owned != board.current_player)
+        
+        print("Possible targets:")
+        for name, army in target_names:
+            print(f"{name} has {army} troops")
+        
         final_target = ''
         while True:
             final_target = input("What territory are you attacking? ").lower()
