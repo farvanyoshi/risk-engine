@@ -46,7 +46,7 @@ class GameBoard:
         return
     
     def deploy(self, troops, location):
-        self.owners[location] += troops
+        self.armies[location] += troops
 
     def battle(self, start, end, attacking_troops):
         self.armies[start] -= attacking_troops
