@@ -45,6 +45,7 @@ def attack(board):
         elif start == 'help':
             start == ''
             print_territory(board)
+            continue
         
         start_index = territory.indexer(start)
 
@@ -64,7 +65,7 @@ def attack(board):
             start = ''
             continue
     
-        print("Possible targets:\n", [(territory.territory_names[i], board.armies[i]) for i, owned in enumerate(possible_targets) if owned])
+        print("Possible targets:\n", [(territory.territory_names[i], int(board.armies[i])) for i, owned in enumerate(possible_targets) if owned != board.current_player])
         final_target = ''
         while True:
             final_target = input("What territory are you attacking? ").lower()

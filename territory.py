@@ -9,7 +9,7 @@ territory_names = [
     "central america",
     "china",
     "congo",
-    "eastern africa",
+    "east africa",
     "eastern australia",
     "eastern united states",
     "egypt",

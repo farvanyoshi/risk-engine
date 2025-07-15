@@ -13,3 +13,4 @@ Steps:
 - To simplify the scoring function, the ai's draft and attack phase can be turned into one
     - assign every bordering territory all the draft troops, and find how to reach the most score
 '''
+
