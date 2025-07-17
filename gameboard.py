@@ -2,6 +2,7 @@ import engine
 import numpy as np
 import player
 import territory
+from .interface.gui import *
 
 # Create random troops and owners to start the game for two players
 init_armies: np.ndarray = np.array([1, 2, 3] * 14)
@@ -55,6 +56,8 @@ class GameBoard:
             self.armies[end] = 1
         else:
             self.armies[end] -= attacking_troops
+
+        
 
     def fortify(self, start: int, end: int, transferring_troops: int) -> None:
         self.armies[start] -= transferring_troops

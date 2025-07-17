@@ -1,5 +1,7 @@
+import random
 import numpy as np
 import territory
+
 '''
 Steps:
 - Implement the draft phase (assume best places to place territories are those)
@@ -19,5 +21,9 @@ Steps:
     - assign every bordering territory all the draft troops, and find how to reach the most score
 '''
 
-def draft(board) -> None:
-    random.choice()
+def draft(drafted, board) -> None:
+    while drafted:
+        placing: int = random.randrange(drafted)
+        location: int = random.choice(np.nonzero(~board.owners)[0])
+        board.armies[location] += placing
+        drafted -= placing

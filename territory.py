@@ -122,20 +122,14 @@ def check_adjacency(start_territory_index: int, end_territory_index: int) -> int
     return adjMatrix[start_territory_index][end_territory_index]
 
 # Converts a territory name to its index
-def indexer(location: str) -> int:
+def indexer(location: str) -> np.ndarray:
     if location == None:
         return -1
-    
-    try:
-        return territory_names.index(location)
-    except:
-        return -1
+    index = np.flatnonzero(territory_names == location)[0]
+    return index if index else -1
 
-def attackable(terr: int, owner: np.ndarray, current_player: bool) -> np.ndarray:    
-    if current_player == 0:
-        return adjMatrix[terr] & ~owner
-    else:
-        return adjMatrix[terr] & owner
+def attackable(terr: int, owner: np.ndarray, current_player: bool) -> np.ndarray:
+    return adjMatrix[terr] & (owner if current_player else ~owner)
     
 # Finds all territories owned by the player (flip the values for the AI)
 def total_connections(terr: int, owners: np.ndarray, player: bool) -> np.ndarray:

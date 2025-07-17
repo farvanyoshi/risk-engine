@@ -6,7 +6,7 @@ def draft(drafted: int, board) -> None:
     print_continent_fraction(board)
     # Allow the player to draft to multiple places on the same turn
     while drafted:
-        location: str = input(f"You have {drafted} troops to deploy. Where are you deploying? ").lower()
+        location: str = input(f"You have {drafted} troops to deploy. Where are you deploying? ").strip().lower()
 
         i: int = territory.indexer(location)
         if i == -1:
