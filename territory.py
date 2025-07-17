@@ -1,6 +1,6 @@
 import numpy as np
 
-territory_names = [ 
+territory_names: list[str] = [ 
     "afghanistan",
     "alaska",
     "alberta",
@@ -46,7 +46,7 @@ territory_names = [
 ]
 
 # Stores the adjacencies between all the territories. The order is the same as that of the territory_names index.
-adjMatrix = np.array((
+adjMatrix: np.ndarray = np.array((
     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
@@ -91,7 +91,7 @@ adjMatrix = np.array((
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
 ), dtype=bool)
 
-continent_names = [
+continent_names: list[str] = [
     "Africa",
     "Asia",
     "Europe",
@@ -101,7 +101,7 @@ continent_names = [
 ]
 
 # Stores the adjacencies between all the continents. The order is the same as that of the continent_names index.
-continents = np.array((
+continents: np.ndarray = np.array((
     (0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
     (1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1),
     (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0),
@@ -110,25 +110,19 @@ continents = np.array((
     (0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)
 ), dtype = bool)
 
-continent_bonuses = np.array([3, 7, 5, 5, 2, 2])
+continent_bonuses: np.ndarray = np.array([3, 7, 5, 5, 2, 2])
 
 # Calculates bonus per continent
-def continent_bonus(player, owners):
-    player_bonus = 0
-    for i, continent in enumerate(continents):
-        if player:
-            if ((owners & continent) == continent).all():
-                player_bonus += continent_bonuses[i]
-        else:
-            if (~owners & continent == continent).all():
-                player_bonus += continent_bonuses[i]
-    return int(player_bonus)
+def continent_bonus(player: bool, owners: np.ndarray) -> int:
+    if not player: owners = ~owners
 
-def check_adjacency(start_territory_index, end_territory_index):
+    return int((np.all(owners & continents == continents, axis = 1) * continent_bonuses).sum())
+
+def check_adjacency(start_territory_index: int, end_territory_index: int) -> int:
     return adjMatrix[start_territory_index][end_territory_index]
 
 # Converts a territory name to its index
-def indexer(location):
+def indexer(location: str) -> int:
     if location == None:
         return -1
     
@@ -137,27 +131,26 @@ def indexer(location):
     except:
         return -1
 
-def attackable(terr, owner, current_player):    
+def attackable(terr: int, owner: np.ndarray, current_player: bool) -> np.ndarray:    
     if current_player == 0:
         return adjMatrix[terr] & ~owner
     else:
         return adjMatrix[terr] & owner
     
 # Finds all territories owned by the player (flip the values for the AI)
-def total_connections(terr, owners, player):
+def total_connections(terr: int, owners: np.ndarray, player: bool) -> np.ndarray:
         if player == 0:
             owners = ~owners
-        checked = np.zeros(42, dtype = bool)
-        neighbors = np.zeros(42, dtype = bool)
-        neighbors[terr] = 1
+        checked: np.ndarray = np.zeros(42, dtype = bool)
+        neighbors: np.ndarray = np.zeros(42, dtype = bool)
+        neighbors[terr] = True
         unchecked = checked ^ neighbors
-        while np.any(unchecked):
-            for i, owned in enumerate(unchecked):
-                if owned:
-                    checked[i] = 1
-                    neighbors = neighbors | (adjMatrix[i] & owners) 
-            unchecked = checked ^ neighbors
-        return checked
 
-def capitalize_territory(terr):
-    return ' '.join([str.upper(i[0]) + str.lower(i[1:]) for i in terr.split(' ')]) if len(terr) > 2 else None
+        owned_territories: np.ndarray = adjMatrix & owners
+
+        while unchecked.any():
+            unchecked = checked ^ neighbors
+            neighbors |= np.bitwise_or.reduce(owned_territories[unchecked], axis = 0)
+            checked[unchecked] = True
+        
+        return checked

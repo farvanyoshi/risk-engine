@@ -1,26 +1,26 @@
 import numpy as np
 import territory
 
-def draft(drafted, board):
-    print_territory(board)
+def draft(drafted: int, board) -> None:
+    print_territories(board)
     print_continent_fraction(board)
     # Allow the player to draft to multiple places on the same turn
     while drafted:
-        location = input(f"You have {drafted} troops to deploy. Where are you deploying? ").lower()
+        location: str = input(f"You have {drafted} troops to deploy. Where are you deploying? ").lower()
 
-        i = territory.indexer(location)
+        i: int = territory.indexer(location)
         if i == -1:
             print("Invalid territory")
             continue
         
-        if ~(board.owners[i] ^ board.current_player):
+        if board.owners[i]:
             try:
-                placing = int(input("How many are you placing? Enter just an integer: "))
+                placing: int = int(input("How many are you placing? Enter just an integer: "))
             except ValueError:
                 print("Please enter a positive integer.")
                 continue
             
-            # placing == -1 is an error handling value the input is not valid
+            # placing == -1 is an error handling value for when the input is not valid
             while placing > drafted or placing < 0:
                 try:
                     placing = int(input(f"Invalid number of troops. Enter a number between 0 and {drafted}: "))
@@ -30,13 +30,13 @@ def draft(drafted, board):
                     continue
 
             board.deploy(placing, i)
-            print(f"{placing} troops added to {territory.capitalize_territory(location)}.")
+            print(f"{placing} troops added to {location.title()}.")
             drafted -= placing
         else:
             print("You don't own that territory!")
 
-def attack(board):
-    start = ''
+def attack(board) -> None:
+    start: str = ''
     while start == '':
         start = input("Where would you like to attack from? (hit the enter key to end your attack phase, or help to see all your territories' troops) ").lower()
 
@@ -44,37 +44,37 @@ def attack(board):
             return
         elif start == 'help':
             start == ''
-            print_territory(board)
+            print_territories(board)
             continue
         
-        start_index = territory.indexer(start)
+        start_index: int = territory.indexer(start)
 
         if start_index == -1:
             start = ''
             continue
         
-        if board.owners[start_index] != board.current_player:
+        if not board.owners[start_index]:
             print("You do not own this territory. Please choose again.")
             start = ''
             continue
 
         # Calculate all targets and show them to the player
-        possible_targets = territory.attackable(start_index, board.owners, 1)
+        possible_targets: np.ndarray = territory.attackable(start_index, board.owners, 1)
         if np.all(possible_targets == 0):
             print("Cannot attack from there. Choose another territory")
             start = ''
             continue
     
-        target_names = ((territory.capitalize_territory(territory.territory_names[i]), int(board.armies[i])) for i, owned in enumerate(possible_targets) if owned != board.current_player)
-        
+        target_names: np.ndarray = np.column_stack(territory.territory_names[possible_targets], board.armies[possible_targets])
+
         print("Possible targets:")
         for name, army in target_names:
             print(f"{name} has {army} troops")
         
-        final_target = ''
+        final_target: str = ''
         while True:
-            final_target = input("What territory are you attacking? ").lower()
-            final_index = territory.indexer(final_target)
+            final_target: str = input("What territory are you attacking? ").lower()
+            final_index: int = territory.indexer(final_target)
 
             if final_index == -1:
                 print("Not a valid place to attack.")
@@ -83,10 +83,10 @@ def attack(board):
                 print("You cannot attack this territory.")
                 continue
 
-            attacking_troops = 0
+            attacking_troops: int = 0
             while not attacking_troops:
                 try:
-                    troops = int(input("How many troops? "))
+                    attacking_troops = int(input("How many troops? "))
                     if attacking_troops < 0 or attacking_troops > board.armies[start_index] - 1:
                         attacking_troops = 0
                         print(f"Invalid number of troops. Please give an integer between 0 and {board.armies[start_index] - 1}")
@@ -96,16 +96,16 @@ def attack(board):
                     continue
             if final_target in possible_targets:
                 board.battle(territory.indexer(start_index), final_index, attacking_troops)
-                print(f"Attacked {territory.capitalize_territory(final_target)} from {territory.capitalize_territory(start)} with {attacking_troops} troops")
+                print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
 
 def fortify(board):
-    start_index = territory.indexer(input("Where would you like to fortify from? ").lower())
+    start_index: int = territory.indexer(input("Where would you like to fortify from? ").lower())
     while start_index == -1:
         start_index = territory.indexer(input("Not a valid territory. Please input another place: ").lower())
         continue
 
     # List out all possiblities to the player
-    connection_matrix = territory.total_connections(start_index, board.owners, board.current_player)
+    connection_matrix = territory.total_connections(start_index, board.owners, 1)
     connections = (territory.territory_names[index] for index, connected in enumerate(connection_matrix) if connected)
     print(f"You can fortify:\n {connections}")
 
@@ -131,32 +131,21 @@ def fortify(board):
 
     board.fortify(start_index, end_index, max_troops)
 
-def print_territory(board, val=[]):
+def print_territories(board):
     # List out all named territories to the player
-    opponent_territories = []
+    names = np.strings.title(territory.territory_names[board.owners])
+    soldiers = board.armies[board.owners].astype(str)
     print("Your owned territories & troop counts:")
-    if board.current_player:
-        for i, owned in enumerate(board.owners):
-            if owned:
-                print(territory.capitalize_territory(territory.territory_names[i]) + ', ' + str(board.armies[i]))
-            else:
-                opponent_territories.append((territory.territory_names[i], int(board.armies[i])))
-    else:
-        for i, owned in enumerate(board.owners):
-            if not owned:
-                print(territory.capitalize_territory(territory.territory_names[i]) + ', ' + str(board.armies[i]))
-            else:
-                opponent_territories.append((territory.territory_names[i], int(board.armies[i])))
+    print('\n'.join(np.strings.add(names + ', ', soldiers)))
 
-    
+    opp_names = np.strings.title(territory.territory_names[~board.owners])
+    opp_soldiers = board.armies[~board.owners].astype(str)    
     print("\nOpponent's owned territories & troop counts:")
-    for i, j in opponent_territories:
-        print(territory.capitalize_territory(i) + ',', j)
+    print('\n'.join(np.strings.add(opp_names + ', ', opp_soldiers)))
+    
 
 def print_continent_fraction(board):
-    if board.current_player:
-        for i, continent in enumerate(territory.continents):
-            print(sum(np.bitwise_and(continent, board.owners)), "of the", sum(continent), "territories in", territory.continent_names[i])
-    else:
-        for i, continent in enumerate(territory.continents):
-            print(sum(np.bitwise_and(continent, np.bitwise_not(board.owners))), "of the", sum(continent), "territories in", territory.continent_names[i])
+    owned_per_continent = np.sum(territory.continents & board.owners, axis = 1)
+    total_per_continent = np.sum(territory.continents, axis = 1)
+    for name, owned, total in zip(territory.continent_names, owned_per_continent, total_per_continent):
+        print(f"{owned} of {total} territories controlled in {name}")

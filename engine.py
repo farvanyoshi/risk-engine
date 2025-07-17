@@ -19,7 +19,7 @@ Steps:
     - assign every bordering territory all the draft troops, and find how to reach the most score
 '''
 
-def draft(board):
+def draft(board) -> None:
     for i, owned in enumerate(board.owners):
         if not owned:
             pass
