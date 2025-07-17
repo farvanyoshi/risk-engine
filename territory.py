@@ -1,6 +1,6 @@
 import numpy as np
 
-territory_names: list[str] = [ 
+territory_names: np.ndarray = np.array(( 
     "afghanistan",
     "alaska",
     "alberta",
@@ -43,7 +43,7 @@ territory_names: list[str] = [
     "western europe",
     "western united states",
     "yakutsk"
-]
+), dtype = str)
 
 # Stores the adjacencies between all the territories. The order is the same as that of the territory_names index.
 adjMatrix: np.ndarray = np.array((
@@ -89,7 +89,7 @@ adjMatrix: np.ndarray = np.array((
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0]
-), dtype=bool)
+), dtype = bool)
 
 continent_names: list[str] = [
     "Africa",

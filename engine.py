@@ -20,8 +20,4 @@ Steps:
 '''
 
 def draft(board) -> None:
-    for i, owned in enumerate(board.owners):
-        if not owned:
-            pass
-        else:
-            pass
+    random.choice()

@@ -92,8 +92,7 @@ def attack(board) -> None:
                         print(f"Invalid number of troops. Please give an integer between 0 and {board.armies[start_index] - 1}")
                 except ValueError:
                     attacking_troops = 0
-                    print("Please enter a valid positive integer.")
-                    continue
+                    print(f"Invalid number of troops. Please give an integer between 0 and {board.armies[start_index] - 1}")
             if final_target in possible_targets:
                 board.battle(territory.indexer(start_index), final_index, attacking_troops)
                 print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
