@@ -1,10 +1,13 @@
+import gameboard
 import numpy as np
 import territory
 
-def draft(drafted: int, board) -> None:
+def draft(board: gameboard.GameBoard) -> None:
     print_territories(board)
     print_continent_fraction(board)
+
     # Allow the player to draft to multiple places on the same turn
+    drafted: int = max(int(np.count_nonzero(board.owners == board.is_player) // 3), 3) + territory.continent_bonus(board.is_player, board.owners)
     while drafted:
         location: str = input(f"You have {drafted} troops to deploy. Where are you deploying? ").strip().lower()
 
@@ -29,7 +32,7 @@ def draft(drafted: int, board) -> None:
                     print("Please enter a positive integer.")
                     continue
 
-            board.deploy(placing, i)
+            board.armies[i] += placing
             print(f"{placing} troops added to {location.title()}.")
             drafted -= placing
         else:
@@ -43,7 +46,7 @@ def attack(board) -> None:
         if start == '':
             return
         elif start == 'help':
-            start == ''
+            start == '' # type: ignore
             print_territories(board)
             continue
         
@@ -59,13 +62,13 @@ def attack(board) -> None:
             continue
 
         # Calculate all targets and show them to the player
-        possible_targets: np.ndarray = territory.attackable(start_index, board.owners, 1)
+        possible_targets: np.ndarray = territory.attackable(start_index, board.owners, True)
         if np.all(possible_targets == 0):
             print("Cannot attack from there. Choose another territory")
             start = ''
             continue
     
-        target_names: np.ndarray = np.column_stack(territory.territory_names[possible_targets], board.armies[possible_targets])
+        target_names: np.ndarray = np.column_stack(territory.territory_names[possible_targets], board.armies[possible_targets]) # type: ignore
 
         print("Possible targets:")
         for name, army in target_names:
@@ -94,7 +97,7 @@ def attack(board) -> None:
                     attacking_troops = 0
                     print(f"Invalid number of troops. Please give an integer between 0 and {board.armies[start_index] - 1}")
             if final_target in possible_targets:
-                board.battle(territory.indexer(start_index), final_index, attacking_troops)
+                board.battle(start_index, final_index, attacking_troops)
                 print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
 
 def fortify(board):
@@ -104,7 +107,7 @@ def fortify(board):
         continue
 
     # List out all possiblities to the player
-    connection_matrix = territory.total_connections(start_index, board.owners, 1)
+    connection_matrix = territory.total_connections(start_index, board.owners, True)
     connections = (territory.territory_names[index] for index, connected in enumerate(connection_matrix) if connected)
     print(f"You can fortify:\n {connections}")
 

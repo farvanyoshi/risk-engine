@@ -74,6 +74,7 @@ def gamespace():
             # Optionally draw the contour as well
                 cv2.drawContours(labeled_img, [contour], -1, (255, 0, 0), 1)
 
+
         # Step 4: Adds region names (and perhaps troop numbers (not yet tho))
         for region_num, region_name in region_to_name.items():
             # Skip if the region number is out of bounds
@@ -495,53 +496,79 @@ def open_image(canvas):
     canvas.configure(image=img_tk)
     canvas.image = img_tk
 
+def display_image(canvas, img_cv):
+        img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+        img_pil = Image.fromarray(img_rgb)
+        img_tk = ImageTk.PhotoImage(img_pil)
+
+        canvas.configure(image=img_tk)
+        canvas.image = img_tk  # Keep reference
 
 #edge detector
 def detect_edges():
-    global regions
+        global regions
 
-    # Convert to grayscale and detect edges
-    gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
-    
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-    edges = cv2.adaptiveThreshold(blurred, 255,
-                              cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-                              cv2.THRESH_BINARY_INV, 11, 2)
-    
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
-    edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+        # Step 1: Convert to grayscale and detect edges
+        gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
+        
 
 
-    # Find contours
-    contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    regions = [cv2.approxPolyDP(cnt, 3, True) for cnt in contours]
+        blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+        edges = cv2.adaptiveThreshold(blurred, 255,
+                                cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                cv2.THRESH_BINARY_INV, 11, 2)
+        
+        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 3))
+        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
 
-    # Adds region names (and perhaps troop numbers (not yet tho))
-    for region_num, region_name in region_to_name.items():
-        # Skip if the region number is out of bounds
-        if region_num - 1 < 0 or region_num - 1 >= len(regions):
-            continue
 
-        region = regions[region_num - 1]  # get the contour by index
+        # Step 2: Find contours
+        contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+        regions = [cv2.approxPolyDP(cnt, 3, True) for cnt in contours]
 
-        # Calculate center of the region using image moments
-        M = cv2.moments(region)
-        if M["m00"] != 0:
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
+        # Step 3: Create a labeled version of the edge image
+        labeled_img = cv2.cvtColor(edges, cv2.COLOR_GRAY2BGR)
 
-            # Draw the name on the image
-            cv2.putText(
-                labeled_img,             # image you're writing on
-                region_name,             # name to draw
-                (cx, cy),                # location (center of region)
-                cv2.FONT_HERSHEY_SIMPLEX,
-                0.4,                     # font scale
-                (0, 255, 0),             # green text
-                1,                       # thickness
-                cv2.LINE_AA              # anti-aliased
-            )
+        for index, contour in enumerate(regions):
+            # Get center point of contour (via moments)
+            M = cv2.moments(contour)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+                cv2.putText(labeled_img, str(index + 1), (cx, cy),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            # Optionally draw the contour as well
+                cv2.drawContours(labeled_img, [contour], -1, (255, 0, 0), 1)
 
+
+        # Step 4: Adds region names (and perhaps troop numbers (not yet tho))
+        for region_num, region_name in region_to_name.items():
+            # Skip if the region number is out of bounds
+            if region_num - 1 < 0 or region_num - 1 >= len(regions):
+                continue
+
+            region = regions[region_num - 1]  # get the contour by index
+
+            # Calculate center of the region using image moments
+            M = cv2.moments(region)
+            if M["m00"] != 0:
+                cx = int(M["m10"] / M["m00"])
+                cy = int(M["m01"] / M["m00"])
+
+                # Draw the name on the image
+                cv2.putText(
+                    labeled_img,             # image you're writing on
+                    region_name,             # name to draw
+                    (cx, cy),                # location (center of region)
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.4,                     # font scale
+                    (0, 255, 0),             # green text
+                    1,                       # thickness
+                    cv2.LINE_AA              # anti-aliased
+                )
+
+        # Step 5: Display labeled image and update region count
+        display_image(labeled_img)
     
 
 #overlaps the window over the edge derector

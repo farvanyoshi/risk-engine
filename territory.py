@@ -122,10 +122,10 @@ def check_adjacency(start_territory_index: int, end_territory_index: int) -> int
     return adjMatrix[start_territory_index][end_territory_index]
 
 # Converts a territory name to its index
-def indexer(location: str) -> np.ndarray:
+def indexer(location: str) -> int:
     if location == None:
         return -1
-    index = np.flatnonzero(territory_names == location)[0]
+    index: int = np.flatnonzero(territory_names == location)[0]
     return index if index else -1
 
 def attackable(terr: int, owner: np.ndarray, current_player: bool) -> np.ndarray:

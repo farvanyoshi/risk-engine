@@ -1,6 +1,19 @@
 from gameboard import GameBoard
-import risk-interface/interface
+import engine
+import player
+import territory
 
-game = GameBoard()
+from .interface import gui
+
+game: GameBoard = GameBoard()
 while not game.is_won():
-    game.initiate_turn()
+    print(f"It is now the {"player" if game.is_player else "AI"}'s turn" )
+    if game.is_player == True:
+        player.draft(game)
+        player.attack(game)
+        player.fortify(game)
+        game.is_player = False
+    elif game.is_player == False:
+        engine.draft(game)
+        engine.attack(game)
+        engine.fortify(game)

@@ -1,3 +1,4 @@
+import gameboard
 import random
 import numpy as np
 import territory
@@ -21,9 +22,16 @@ Steps:
     - assign every bordering territory all the draft troops, and find how to reach the most score
 '''
 
-def draft(drafted, board) -> None:
+def draft(board: gameboard.GameBoard) -> None:
+    drafted: int = max(int(np.count_nonzero(board.owners == board.is_player) // 3), 3) + territory.continent_bonus(board.is_player, board.owners)
     while drafted:
         placing: int = random.randrange(drafted)
         location: int = random.choice(np.nonzero(~board.owners)[0])
         board.armies[location] += placing
         drafted -= placing
+
+def attack(board: gameboard.GameBoard) -> None:
+    pass
+
+def fortify(board: gameboard.GameBoard) -> None:
+    pass

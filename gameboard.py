@@ -12,10 +12,10 @@ np.random.shuffle(init_owners)
 
 # Contains the common game code to both the player and AI
 class GameBoard:
-    def __init__(self, player: bool = init_owners[0], armies: np.ndarray = init_armies, owners: np.ndarray = init_owners) -> None:
+    def __init__(self, armies: np.ndarray = init_armies, owners: np.ndarray = init_owners) -> None:
         self.armies: np.ndarray = armies
         self.owners: np.ndarray = owners
-        self.current_player: bool = player # Whoever owns afghanistan goes first for some reason
+        self.is_player: bool = owners[0] # Whoever owns afghanistan goes first for some reason
     
     def is_won(self) -> bool:
         if np.all(self.owners == 0):
@@ -26,27 +26,6 @@ class GameBoard:
             return True
         return False
 
-    def initiate_turn(self) -> None:
-        print("It is now player " + str(1 if self.current_player else 0) + "'s turn" )
-        drafted: int = int(max(np.count_nonzero(self.owners == self.current_player) // 3, 3) 
-        + territory.continent_bonus(self.current_player, self.owners))
-
-        if self.current_player == 1:
-            player.draft(drafted, self)
-            player.attack(self)
-            player.fortify(self)
-            self.current_player = 0
-        elif self.current_player == 0:
-            # engine.draft(drafted)
-            # engine.fortify()
-            player.draft(drafted, self)
-            player.attack(self)
-            player.fortify(self)
-            self.current_player = 1
-    
-    def deploy(self, troops: int, location: int) -> None:
-        self.armies[location] += troops
-
     def battle(self, start: int, end: int, attacking_troops: int) -> None:
         self.armies[start] -= attacking_troops
         if attacking_troops > self.armies[end]:
@@ -56,8 +35,6 @@ class GameBoard:
             self.armies[end] = 1
         else:
             self.armies[end] -= attacking_troops
-
-        
 
     def fortify(self, start: int, end: int, transferring_troops: int) -> None:
         self.armies[start] -= transferring_troops
