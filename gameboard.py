@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from interface import gui
+
 
 # Create random troops and owners to start the game for two players
 init_armies: npt.NDArray[np.intp] = np.array([1, 2, 3] * 14)
@@ -14,7 +14,7 @@ class GameBoard:
         self.armies: npt.NDArray[np.intp] = armies
         self.owners: npt.NDArray[np.bool] = owners
         self.is_player: bool = owners[0] # Whoever owns afghanistan goes first for some reason
-    
+
     def is_won(self) -> bool:
         if np.all(self.owners == 0):
             print("The AI has won the game!")
