@@ -47,7 +47,7 @@ def attack(board) -> None:
         if start == '':
             return
         elif start == 'help':
-            start == '' # type: ignore
+            start = '' # type: ignore
             print_territories(board)
             continue
         

@@ -45,7 +45,8 @@ def attack(board: gameboard.GameBoard) -> None:
     attack_matrix: npt.NDArray[np.bool] = (territory.adjMatrix & (board.owners if board.is_player else ~board.owners))
 
     # randomly choose territories to attack from
-    sampler: list[int] = random.sample(range(42), 42)
+    sampler: npt.NDArray[np.intp] = np.flatnonzero(~board.owners)
+    np.random.shuffle(sampler)
 
     # if a possible attack is winnable, do it
 
