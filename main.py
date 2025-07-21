@@ -2,8 +2,6 @@ from gameboard import GameBoard
 import random_moves
 import player
 
-from .interface import gui
-
 game: GameBoard = GameBoard()
 while not game.is_won():
     print(f"It is now the {"player" if game.is_player else "AI"}'s turn" )
