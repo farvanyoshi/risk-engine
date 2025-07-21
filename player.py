@@ -1,5 +1,6 @@
 import gameboard
 import numpy as np
+import numpy.typing as npt
 import territory
 
 def draft(board: gameboard.GameBoard) -> None:
@@ -62,7 +63,8 @@ def attack(board) -> None:
             continue
 
         # Calculate all targets and show them to the player
-        possible_targets: np.ndarray = territory.attackable(start_index, board.owners, True)
+        possible_targets: np.ndarray = territory.adjMatrix[start_index] & (board.owners if board.is_player else ~board.owners)
+
         if np.all(possible_targets == 0):
             print("Cannot attack from there. Choose another territory")
             start = ''
@@ -76,7 +78,9 @@ def attack(board) -> None:
         
         final_target: str = ''
         while True:
-            final_target: str = input("What territory are you attacking? ").lower()
+            final_target: str = input("What territory are you attacking? (Input nothing to move on)").lower()
+            if final_target == '':
+                break
             final_index: int = territory.indexer(final_target)
 
             if final_index == -1:

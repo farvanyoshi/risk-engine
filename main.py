@@ -1,7 +1,6 @@
 from gameboard import GameBoard
-import engine
+import random_moves
 import player
-import territory
 
 from .interface import gui
 
@@ -14,6 +13,6 @@ while not game.is_won():
         player.fortify(game)
         game.is_player = False
     elif game.is_player == False:
-        engine.draft(game)
-        engine.attack(game)
-        engine.fortify(game)
+        random_moves.draft(game)
+        random_moves.attack(game)
+        random_moves.fortify(game)

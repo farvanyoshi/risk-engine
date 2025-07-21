@@ -1,7 +1,5 @@
-import engine
 import numpy as np
-import player
-import territory
+import numpy.typing as npt
 from .interface.gui import *
 
 # Create random troops and owners to start the game for two players

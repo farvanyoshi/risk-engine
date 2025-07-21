@@ -1,6 +1,7 @@
 import numpy as np
+import numpy.typing as npt
 
-territory_names: np.ndarray = np.array(( 
+territory_names: npt.NDArray[np.str_] = np.array(( 
     "afghanistan",
     "alaska",
     "alberta",
@@ -46,7 +47,7 @@ territory_names: np.ndarray = np.array((
 ), dtype = str)
 
 # Stores the adjacencies between all the territories. The order is the same as that of the territory_names index.
-adjMatrix: np.ndarray = np.array((
+adjMatrix: npt.NDArray[np.bool] = np.array((
     [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
     [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
@@ -101,7 +102,7 @@ continent_names: list[str] = [
 ]
 
 # Stores the adjacencies between all the continents. The order is the same as that of the continent_names index.
-continents: np.ndarray = np.array((
+continents: npt.NDArray[np.bool] = np.array((
     (0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0),
     (1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1),
     (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0),
@@ -110,10 +111,10 @@ continents: np.ndarray = np.array((
     (0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)
 ), dtype = bool)
 
-continent_bonuses: np.ndarray = np.array([3, 7, 5, 5, 2, 2])
+continent_bonuses: npt.NDArray[np.int32] = np.array([3, 7, 5, 5, 2, 2])
 
 # Calculates bonus per continent
-def continent_bonus(player: bool, owners: np.ndarray) -> int:
+def continent_bonus(player: bool, owners: npt.NDArray[np.bool]) -> int:
     if not player: owners = ~owners
 
     return int((np.all(owners & continents == continents, axis = 1) * continent_bonuses).sum())
@@ -128,19 +129,16 @@ def indexer(location: str) -> int:
     index: int = np.flatnonzero(territory_names == location)[0]
     return index if index else -1
 
-def attackable(terr: int, owner: np.ndarray, current_player: bool) -> np.ndarray:
-    return adjMatrix[terr] & (owner if current_player else ~owner)
-    
 # Finds all territories owned by the player (flip the values for the AI)
-def total_connections(terr: int, owners: np.ndarray, player: bool) -> np.ndarray:
+def total_connections(terr: int, owners: npt.NDArray[np.bool], player: bool) -> npt.NDArray[np.bool]:
         if player == 0:
             owners = ~owners
-        checked: np.ndarray = np.zeros(42, dtype = bool)
-        neighbors: np.ndarray = np.zeros(42, dtype = bool)
+        checked: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
+        neighbors: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
         neighbors[terr] = True
-        unchecked = checked ^ neighbors
+        unchecked: npt.NDArray[np.bool] = checked ^ neighbors
 
-        owned_territories: np.ndarray = adjMatrix & owners
+        owned_territories: npt.NDArray = adjMatrix & owners
 
         while unchecked.any():
             unchecked = checked ^ neighbors
