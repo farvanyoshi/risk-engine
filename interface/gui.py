@@ -2,7 +2,7 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
-import gameboard
+#from gameboard import GameBoard
 
 
 #gives name of region when clicked
@@ -236,7 +236,8 @@ def update_region(canvas, edges):
         #if region_name in ai:
         #    cv2.drawContours(labeled_img, [region], -1, (0,0,255), thickness=cv2.FILLED)
         
-        ##need to fix
+        ##need to fix MAKES region blue
+        '''
         index = 0
         for i in regions:
             index += 1
@@ -245,6 +246,7 @@ def update_region(canvas, edges):
                     cv2.drawContours(labeled_img, [i], -1, (255, 0, 0), thickness=cv2.FILLED)
         if region_num == 163:
             cv2.drawContours(labeled_img, [region], -1, (0, 0, 255), thickness=cv2.FILLED)  # Blue for Alaska
+            '''
         # Calculate center of the region using image moments
         M = cv2.moments(region)
         if M["m00"] != 0:
@@ -321,7 +323,7 @@ def gamespace():
 
     #open image and detect edges
     global img_cv
-    image_path = 'riskboard_resized.jpg'
+    image_path = 'interface/riskboard_resized.jpg'
     img_cv = cv2.imread(image_path)
     
     open_image(canvas,img_cv)
@@ -350,7 +352,7 @@ root1.geometry("895x473")
 root1.title("Risk Game")
 
 #background image
-image_path1 = "risk_background.jpg"
+image_path1 = "interface/risk_background.jpg"
 original_image1 = Image.open(image_path1)
 tk_image1 = ImageTk.PhotoImage(original_image1)
 image_label1 = tk.Label(root1, image=tk_image1)
