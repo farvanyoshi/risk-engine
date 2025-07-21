@@ -23,13 +23,15 @@ Steps:
     - assign every bordering territory all the draft troops, and find how to reach the most score
 '''
 
-def draft(board: gameboard.GameBoard) -> None:
-    drafted: int = max(int(np.count_nonzero(board.owners == board.is_player) // 3), 3) + territory.continent_bonus(board.is_player, board.owners)
-    while drafted > 0:
-        placing: int = random.randrange(drafted)
+def deploy(board: gameboard.GameBoard) -> None:
+    deployed: int = max(int(np.count_nonzero(board.owners == board.is_player)) // 3, 3) + territory.continent_bonus(board.is_player, board.owners)
+    print(f"The AI has {deployed} troops to deploy")
+    while deployed > 0:
+        placing: int = random.randrange(1, deployed + 1)
         location: int = random.choice(np.flatnonzero(~board.owners))
         board.armies[location] += placing
-        drafted -= placing
+        deployed -= placing
+        print(f"Deployed {placing} troops to {location}")
 
 def attack(board: gameboard.GameBoard) -> None:
     '''
@@ -39,20 +41,13 @@ def attack(board: gameboard.GameBoard) -> None:
     Choose a random number of troops to attack
     '''
 
-    # choose territory
-    start: int = random.choice(np.flatnonzero(~board.owners))
-
-    # search through all adjacent attackable territories
+    # search through all attackable territories
     attack_matrix: npt.NDArray[np.bool] = (territory.adjMatrix & (board.owners if board.is_player else ~board.owners))
-
-    while not np.any(attack_matrix[start]):
-        start = random.choice(np.flatnonzero(~board.owners))
 
     # randomly choose territories to attack from
     sampler: list[int] = random.sample(range(42), 42)
 
     # if a possible attack is winnable, do it
-    # TODO: Refactor into one loop
 
     attackable_coordinates = np.nonzero(attack_matrix[sampler])
 
@@ -64,8 +59,9 @@ def attack(board: gameboard.GameBoard) -> None:
         if board.armies[start] > board.armies[end]:
             attacking_troops = random.randrange(int(board.armies[end]) + 1, board.armies[start])
             board.battle(start, end, attacking_troops)
+            print(f"Attacked {territory.territory_names[end]} from {territory.territory_names[start]} with {attacking_troops} troops")
             break
-
+    
 def fortify(board: gameboard.GameBoard) -> None:
     start: int = random.choice(np.flatnonzero(~board.owners))
     connections: npt.NDArray[np.bool] = territory.total_connections(start, board.owners, False)
@@ -76,3 +72,4 @@ def fortify(board: gameboard.GameBoard) -> None:
     end: int = random.choice(np.flatnonzero(connections))
     num_troops: int = random.randrange(1, int(board.armies[start]))
     board.fortify(start, end, num_troops)
+    print(f"Fortified {territory.territory_names[end]} from {territory.territory_names[start]} with {num_troops} troops")

@@ -1,8 +1,8 @@
-
 import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
+import gameboard
 
 
 #gives name of region when clicked
@@ -58,6 +58,29 @@ region_to_name = {
         21: "Eastern Australia"
     }
 
+def next_stage():
+    ######################NEED TO GO TO NEXT STAGE
+    '''
+    if turn == player:
+        if stage == deploy_phase:
+            stage = attack_phase:
+        if stage == attack_phase:
+            stage = fortify_phase:
+        if stage == fortify_phase:
+            turn = ai
+            stage = deploy_phase
+    if turn == ai:
+        if stage == deploy_phase:
+            stage = attack_phase
+        if stage == attack_phase:
+            stage = fortify_phase
+        if stage == fortify_phase:
+            turn = player
+            stage = deploy_phase
+'''
+
+
+
 def on_click(event):
     region_name = "Not a Region"
     #print(f"Mouse clicked at {event.x}, {event.y}")
@@ -65,7 +88,6 @@ def on_click(event):
         region_num = i+1
         if cv2.pointPolygonTest(region, (event.x, event.y), False) >= 0:
             print(f"Clicked inside region {region_num}")
-
             try:
                 region_name = region_to_name[region_num]
             except KeyError:
@@ -183,7 +205,7 @@ def update_region(canvas, edges):
     #light background
     labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
     labeled_img[edges != 0] = (0, 0, 0)
-
+    
     # functionality: Labels each region with their respective number
     # for idx, contour in enumerate(regions):
     #     # Get center point of contour (via moments)
@@ -194,35 +216,69 @@ def update_region(canvas, edges):
     #         cv2.putText(labeled_img, str(idx + 1), (cx, cy),
     #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
-    # Functionality: labels REGION NAMES
+    # Functionality: labels 
     for region_num, region_name in region_to_name.items():
+        if region_num == 27 or region_num == 17 or region_num == 20 or region_num ==36:
+            continue
+
             # Skip if the region number is out of bounds
-            if region_num - 1 < 0 or region_num - 1 >= len(regions):
-                continue
+        if region_num - 1 < 0 or region_num - 1 >= len(regions):
+            continue
+        
 
-            region = regions[region_num - 1]  # get the contour by index
+        region = regions[region_num - 1]  # get the contour by index
 
-            # Calculate center of the region using image moments
-            M = cv2.moments(region)
-            if M["m00"] != 0:
-                cx = int(M["m10"] / M["m00"])
-                cy = int(M["m01"] / M["m00"])
+        #colors for each region based on owner
 
-                # Draw the name on the image
-                cv2.putText(
-                    labeled_img,             # image you're writing on
-                    region_name,             # name to draw
-                    (cx, cy),                # location (center of region)
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    0.4,                     # font scale
-                    (0, 255, 0),             # green text
-                    1,                       # thickness
-                    cv2.LINE_AA              # anti-aliased
-                )
+        ##########################################need to implement
+        #if region_name in player:
+        #    cv2.drawContours(labeled_img, [region], -1, (0,255,0), thickness=cv2.FILLED)
+        #if region_name in ai:
+        #    cv2.drawContours(labeled_img, [region], -1, (0,0,255), thickness=cv2.FILLED)
+        
+        ##need to fix
+        index = 0
+        for i in regions:
+            index += 1
+            for region_num in region_to_name.items():
+                if index != region_num:
+                    cv2.drawContours(labeled_img, [i], -1, (255, 0, 0), thickness=cv2.FILLED)
+        if region_num == 163:
+            cv2.drawContours(labeled_img, [region], -1, (0, 0, 255), thickness=cv2.FILLED)  # Blue for Alaska
+        # Calculate center of the region using image moments
+        M = cv2.moments(region)
+        if M["m00"] != 0:
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
 
+            # Draw the name on the image
+            cv2.putText(
+                labeled_img,             # image you're writing on
+                region_name,             # name to draw
+                (cx-10, cy),                # location (center of region) shifted to center text
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,                     # font scale
+                (0, 255, 0),             # green text
+                1,                       # thickness
+                cv2.LINE_AA              # anti-aliased
+            )
+            cv2.putText(
+                labeled_img,             # image you're writing on
+                "hi",########################NEED TO CHANGE TO TROOP NUMBER FOR EACH TERRITORY             # name to draw
+                (cx, cy-10),                # location (center of region) shifted to center text
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.4,                     # font scale
+                (0, 255, 0),             # green text
+                1,                       # thickness
+                cv2.LINE_AA
+            )           # image you're writing on
+
+            
 
     open_image(canvas, labeled_img)
 
+
+    
 
 
 
@@ -265,7 +321,7 @@ def gamespace():
 
     #open image and detect edges
     global img_cv
-    image_path = 'interface/riskboard_resized.jpg'
+    image_path = 'riskboard_resized.jpg'
     img_cv = cv2.imread(image_path)
     
     open_image(canvas,img_cv)
@@ -274,6 +330,10 @@ def gamespace():
     #space does space function
     canvas.bind("<Button-1>", on_click)
 
+
+    next_stage_button = tk.Button(root, text="Next Stage", command=next_stage)
+    next_stage_button.pack(pady=10)
+    next_stage_button.place(x=240,y=530)
     root.mainloop()
 
 def on_space(event):
@@ -290,7 +350,7 @@ root1.geometry("895x473")
 root1.title("Risk Game")
 
 #background image
-image_path1 = "interface/risk_background.jpg"
+image_path1 = "risk_background.jpg"
 original_image1 = Image.open(image_path1)
 tk_image1 = ImageTk.PhotoImage(original_image1)
 image_label1 = tk.Label(root1, image=tk_image1)

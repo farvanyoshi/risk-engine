@@ -1,6 +1,6 @@
 import numpy as np
 import numpy.typing as npt
-from .interface.gui import *
+from interface import gui
 
 # Create random troops and owners to start the game for two players
 init_armies: npt.NDArray[np.intp] = np.array([1, 2, 3] * 14)

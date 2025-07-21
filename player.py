@@ -3,20 +3,20 @@ import numpy as np
 import numpy.typing as npt
 import territory
 
-def draft(board: gameboard.GameBoard) -> None:
+def deploy(board: gameboard.GameBoard) -> None:
     print_territories(board)
     print_continent_fraction(board)
 
     # Allow the player to draft to multiple places on the same turn
-    drafted: int = max(int(np.count_nonzero(board.owners == board.is_player) // 3), 3) + territory.continent_bonus(board.is_player, board.owners)
-    while drafted:
-        location: str = input(f"You have {drafted} troops to deploy. Where are you deploying? ").strip().lower()
+    deployed: int = max(int(np.count_nonzero(board.owners == board.is_player)) // 3, 3) + territory.continent_bonus(board.is_player, board.owners)
+    while deployed:
+        location: str = input(f"You have {deployed} troops to deploy. Where are you deploying? ").strip().lower()
 
         i: int = territory.indexer(location)
         if i == -1:
             print("Invalid territory")
             continue
-        
+
         if board.owners[i]:
             try:
                 placing: int = int(input("How many are you placing? Enter just an integer: "))
@@ -25,9 +25,9 @@ def draft(board: gameboard.GameBoard) -> None:
                 continue
             
             # placing == -1 is an error handling value for when the input is not valid
-            while placing > drafted or placing < 0:
+            while placing > deployed or placing < 0:
                 try:
-                    placing = int(input(f"Invalid number of troops. Enter a number between 0 and {drafted}: "))
+                    placing = int(input(f"Invalid number of troops. Enter a number between 0 and {deployed}: "))
                 except ValueError:
                     placing = -1
                     print("Please enter a positive integer.")
@@ -35,7 +35,7 @@ def draft(board: gameboard.GameBoard) -> None:
 
             board.armies[i] += placing
             print(f"{placing} troops added to {location.title()}.")
-            drafted -= placing
+            deployed -= placing
         else:
             print("You don't own that territory!")
 
