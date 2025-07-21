@@ -14,3 +14,4 @@ while not game.is_won():
         random_moves.deploy(game)
         random_moves.attack(game)
         random_moves.fortify(game)
+        # game.is_player = True

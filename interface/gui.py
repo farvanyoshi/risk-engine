@@ -350,7 +350,7 @@ root1.geometry("895x473")
 root1.title("Risk Game")
 
 #background image
-image_path1 = "risk_background.jpg"
+image_path1 = "interface/risk_background.jpg"
 original_image1 = Image.open(image_path1)
 tk_image1 = ImageTk.PhotoImage(original_image1)
 image_label1 = tk.Label(root1, image=tk_image1)
