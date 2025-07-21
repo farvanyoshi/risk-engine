@@ -124,10 +124,10 @@ def check_adjacency(start_territory_index: int, end_territory_index: int) -> int
 
 # Converts a territory name to its index
 def indexer(location: str) -> int:
-    if location == None:
-        return -1
-    index: int = np.flatnonzero(territory_names == location)[0]
-    return index if index else -1
+    try:
+        return np.flatnonzero(territory_names == location)[0]
+    except:
+         return -1
 
 # Finds all territories owned by the player (flip the values for the AI)
 def total_connections(terr: int, owners: npt.NDArray[np.bool], player: bool) -> npt.NDArray[np.bool]:
@@ -145,4 +145,5 @@ def total_connections(terr: int, owners: npt.NDArray[np.bool], player: bool) -> 
             neighbors |= np.bitwise_or.reduce(owned_territories[unchecked], axis = 0)
             checked[unchecked] = True
         
+        checked[terr] = False
         return checked
