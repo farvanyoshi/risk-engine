@@ -47,7 +47,7 @@ def attack(board) -> None:
         if start == '':
             return
         elif start == 'help':
-            start = '' # type: ignore
+            start = ''
             print_territories(board)
             continue
         
@@ -63,7 +63,7 @@ def attack(board) -> None:
             continue
 
         # Calculate all targets and show them to the player
-        possible_targets: np.ndarray = territory.adjMatrix[start_index] & (board.owners if board.is_player else ~board.owners)
+        possible_targets: npt.NDArray[np.bool] = (territory.adjMatrix[start_index] & (board.owners if board.is_player else ~board.owners))
 
         if np.all(possible_targets == 0):
             print("Cannot attack from there. Choose another territory")

@@ -56,7 +56,7 @@ adjMatrix: npt.NDArray[np.bool] = np.array((
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0],
     [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
@@ -131,19 +131,19 @@ def indexer(location: str) -> int:
 
 # Finds all territories owned by the player (flip the values for the AI)
 def total_connections(terr: int, owners: npt.NDArray[np.bool], player: bool) -> npt.NDArray[np.bool]:
-        if player == 0:
-            owners = ~owners
-        checked: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
-        neighbors: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
-        neighbors[terr] = True
-        unchecked: npt.NDArray[np.bool] = checked ^ neighbors
+    if player == 0:
+        owners = ~owners
+    checked: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
+    neighbors: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
+    neighbors[terr] = True
+    unchecked: npt.NDArray[np.bool] = checked ^ neighbors
 
-        owned_territories: npt.NDArray = adjMatrix & owners
+    owned_territories: npt.NDArray = adjMatrix & owners
 
-        while unchecked.any():
-            unchecked = checked ^ neighbors
-            neighbors |= np.bitwise_or.reduce(owned_territories[unchecked], axis = 0)
-            checked[unchecked] = True
-        
-        checked[terr] = False
-        return checked
+    while unchecked.any():
+        unchecked = checked ^ neighbors
+        neighbors |= np.bitwise_or.reduce(owned_territories[unchecked], axis = 0)
+        checked[unchecked] = True
+    
+    checked[terr] = False
+    return checked
