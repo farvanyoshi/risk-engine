@@ -125,7 +125,7 @@ def check_adjacency(start_territory_index: int, end_territory_index: int) -> int
 # Converts a territory name to its index
 def indexer(location: str) -> int:
     try:
-        return np.flatnonzero(territory_names == location)[0]
+        return int(np.flatnonzero(territory_names == location)[0])
     except:
          return -1
 

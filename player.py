@@ -70,15 +70,15 @@ def attack(board) -> None:
             start = ''
             continue
     
-        target_names: np.ndarray = np.column_stack(territory.territory_names[possible_targets], board.armies[possible_targets]) # type: ignore
+        target_names: np.ndarray = np.column_stack((territory.territory_names[possible_targets], board.armies[possible_targets])) # type: ignore
 
         print("Possible targets:")
         for name, army in target_names:
-            print(f"{name} has {army} troops")
+            print(f"{name.title()} has {army} troops")
         
         final_target: str = ''
         while True:
-            final_target: str = input("What territory are you attacking? (Input nothing to move on)").lower()
+            final_target: str = input("What territory are you attacking? (Input nothing to move on) ").lower()
             if final_target == '':
                 break
             final_index: int = territory.indexer(final_target)
@@ -86,7 +86,7 @@ def attack(board) -> None:
             if final_index == -1:
                 print("Not a valid place to attack.")
                 continue
-            if final_target not in possible_targets:
+            if possible_targets[final_index]:
                 print("You cannot attack this territory.")
                 continue
 
@@ -113,7 +113,7 @@ def fortify(board):
     # List out all possiblities to the player
     connection_matrix = territory.total_connections(start_index, board.owners, True)
     connections = (territory.territory_names[index] for index, connected in enumerate(connection_matrix) if connected)
-    print(f"You can fortify:\n {connections}")
+    print(f"You can fortify:\n {list(connections)}")
 
     end = input("Where would you like to fortify? ")
     while end not in connections:
