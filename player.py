@@ -86,7 +86,7 @@ def attack(board) -> None:
             if final_index == -1:
                 print("Not a valid place to attack.")
                 continue
-            if possible_targets[final_index]:
+            if not possible_targets[final_index]:
                 print("You cannot attack this territory.")
                 continue
 
@@ -100,9 +100,9 @@ def attack(board) -> None:
                 except ValueError:
                     attacking_troops = 0
                     print(f"Invalid number of troops. Please give an integer between 0 and {board.armies[start_index] - 1}")
-            if final_target in possible_targets:
-                board.battle(start_index, final_index, attacking_troops)
-                print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
+            
+            board.battle(start_index, final_index, attacking_troops)
+            print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
 
 def fortify(board):
     start_index: int = territory.indexer(input("Where would you like to fortify from? ").lower())
@@ -113,7 +113,7 @@ def fortify(board):
     # List out all possiblities to the player
     connection_matrix = territory.total_connections(start_index, board.owners, True)
     connections = (territory.territory_names[index] for index, connected in enumerate(connection_matrix) if connected)
-    print(f"You can fortify:\n {list(connections)}")
+    print(f"You can fortify:\n {map(str, list(connections))}")
 
     end = input("Where would you like to fortify? ")
     while end not in connections:
