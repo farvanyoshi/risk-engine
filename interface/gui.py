@@ -2,15 +2,17 @@ import tkinter as tk
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
+#allows gameboard to be imported
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gameboard import GameBoard
 GameBoard=GameBoard()
+#gives troop_num the values of gamebaord.armies
 global troop_num
+global owners
+owners = GameBoard.owners
 troop_num = GameBoard.armies
-for i in troop_num:
-    print(troop_num[i])
 
 
 #gives name of region when clicked
@@ -21,14 +23,14 @@ region_to_name = {
         140: "Alberta",
         25: "Argentina",
         56: "Brazil",
-        86: "Central America",
+        86: "C. America",
         107: "China",
         29: "Congo",
-        49: "East Africa",
-        21: "Eastern Australia",
-        112: "Eastern United States",
+        49: "E. Africa",
+        21: "E. Australia",
+        112: "E. United States",
         61: "Egypt",
-        127: "Great Britain",
+        127: "G. Britain",
         177: "Greenland",
         145: "Iceland",
         83: "India",
@@ -37,12 +39,12 @@ region_to_name = {
         120: "Japan",
         168: "Kamchatka",
         9: "Madagascar",
-        78: "Middle East",
+        78: "M. East",
         118: "Mongolia",
         44: "New Guinea",
-        67: "North Africa",
-        122: "Nothern Europe",
-        169: "Northwest Territory",
+        67: "N. Africa",
+        122: "N. Europe",
+        169: "N. Territory",
         139: "Ontario",
         54: "Peru",
         143: "Quebec",
@@ -50,13 +52,13 @@ region_to_name = {
         161: "Scandinavia",
         69: "Siam",
         175: "Siberia",
-        15: "South Africa",
-        94: "Southern Europe",
+        15: "S. Africa",
+        94: "S. Europe",
         167: "Ural",
         64: "Venezuela",
-        14: "Western Australia",
-        95: "Western Europe",
-        114: "Western United States",
+        14: "W. Australia",
+        95: "W. Europe",
+        114: "W. United States",
         172: "Yakutsk",
         36: "Indonesia",
         27: "Indonesia",
@@ -123,6 +125,7 @@ def update_region(canvas, edges):
     labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
     labeled_img[edges != 0] = (0, 0, 0)
 
+    
     # Functionality: labels 
     index = 0
     for region_num, region_name in region_to_name.items():
@@ -135,19 +138,26 @@ def update_region(canvas, edges):
         
 
         region = regions[region_num - 1]  # get the contour by index
-
+        ###########################NEED TO CONNECT INDONESIA
         #colors for each region based on owner
+        if owners[index] == True:
+            if region_num == 28:
+                #make whole indonesia one color
+                cv2.drawContours(labeled_img, [regions[region_num - 1]], -1, (0,255,0), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num - 2]], -1, (0,255,0), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num + 7]], -1, (0,255,0), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num - 12]], -1, (0,255,0), thickness=cv2.FILLED)
 
-        ##########################################need to implement
-        #if region_name in player:
-        #    cv2.drawContours(labeled_img, [region], -1, (0,255,0), thickness=cv2.FILLED)
-        #if region_name in ai:
-        #    cv2.drawContours(labeled_img, [region], -1, (0,0,255), thickness=cv2.FILLED)
-        
-        ##need to fix MAKES region blue
-        #code for troop number
-        
-        
+            cv2.drawContours(labeled_img, [region], -1, (0,255,0), thickness=cv2.FILLED)
+        if owners[index]== False:
+            if region_num ==28:
+                cv2.drawContours(labeled_img, [regions[region_num - 1]], -1, (0,0,255), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num - 2]], -1, (0,0,255), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num + 7]], -1, (0,0,255), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num - 12]], -1, (0,0,255), thickness=cv2.FILLED)
+            cv2.drawContours(labeled_img, [region], -1, (0,0,255), thickness=cv2.FILLED)
+
+
 
 
 
@@ -163,20 +173,20 @@ def update_region(canvas, edges):
             cv2.putText(
                 labeled_img,             # image you're writing on
                 region_name,             # name to draw
-                (cx-10, cy),                # location (center of region) shifted to center text
+                (cx-22, cy+5),                # location (center of region) shifted to center text
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,                     # font scale
-                (0, 255, 0),             # green text
+                (0, 0, 0),             # green text
                 1,                       # thickness
                 cv2.LINE_AA              # anti-aliased
             )
             cv2.putText(
                 labeled_img,             # image you're writing on
                 str(troop_num[index]),             # CHANGE TO TROOP NUMBER FOR EACH TERRITORY             # name to draw
-                (cx, cy-10),                # location (center of region) shifted to center text
+                (cx, cy+16),                # location (center of region) shifted to center text
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,                     # font scale
-                (0, 255, 0),             # green text
+                (0, 0, 0),             # green text
                 1,                       # thickness
                 cv2.LINE_AA
             )           # image you're writing on
@@ -213,7 +223,6 @@ def detect_edges(canvas):
     # Find contours
     contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     regions = [cv2.approxPolyDP(cnt, 3, True) for cnt in contours]
-
     update_region(canvas, edges)
 
 
