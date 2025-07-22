@@ -1,9 +1,27 @@
 import tkinter as tk
+from tkinter.scrolledtext import ScrolledText
 from PIL import Image, ImageTk
 import cv2
 import numpy as np
-#from gameboard import GameBoard
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from gameboard import GameBoard
 
+import sys
+import os
+
+import player
+# import random_moves
+
+game_phase = "deploy"
+
+game: GameBoard = GameBoard()
+
+start_terr_name: str = ""
+end_terr_name: str = ""
+
+troop_amount_selection: int = 0
 
 #gives name of region when clicked
 
@@ -58,28 +76,43 @@ region_to_name = {
         21: "Eastern Australia"
     }
 
-def next_stage():
-    ######################NEED TO GO TO NEXT STAGE
-    '''
-    if turn == player:
-        if stage == deploy_phase:
-            stage = attack_phase:
-        if stage == attack_phase:
-            stage = fortify_phase:
-        if stage == fortify_phase:
-            turn = ai
-            stage = deploy_phase
-    if turn == ai:
-        if stage == deploy_phase:
-            stage = attack_phase
-        if stage == attack_phase:
-            stage = fortify_phase
-        if stage == fortify_phase:
-            turn = player
-            stage = deploy_phase
-'''
+def validate_int_input(new_value):
+    if new_value == "" or new_value.isdigit():
+        return True
+    return False
+
+game: GameBoard = GameBoard()
 
 
+def next_stage(stage):
+    if game.is_won():
+        print("Game over!")
+        return
+
+    print(f"It is now the {'player' if game.is_player else 'AI'}'s turn")
+
+    match stage:
+        case "deploy":
+            deployed: int = max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(board.is_player, board.owners)
+            return_value = player.deploy(game, )
+
+    if game.is_player:
+        # player.deploy(game)
+        # player.attack(game)
+        # player.fortify(game)
+        game.is_player = False
+    else:
+        pass
+        # random_moves.deploy(game)
+        # update_region(canvas, edges)
+        # random_moves.attack(game)
+        # update_region(canvas, edges)
+        # random_moves.fortify(game)
+        # update_region(canvas, edges)
+        game.is_player = True
+
+    next_stage()
+    root1.mainloop()
 
 def on_click(event):
     region_name = "Not a Region"
@@ -93,99 +126,27 @@ def on_click(event):
             except KeyError:
                 pass
 
-            # if region_num == 163:
-            #     region_name = "Alaska"
-            # elif region_num == 169:
-            #     region_name = "Northwest Territory"
-            # elif region_num == 177:
-            #     region_name = "Greenland"
-            # elif region_num == 140:
-            #     region_name = "Alberta"
-            # elif region_num == 139:
-            #     region_name = "Ontario"
-            # elif region_num == 143:
-            #     region_name = "Quebec"
-            # elif region_num == 114:
-            #     region_name = "Western United States"
-            # elif region_num == 112:
-            #     region_name = "Eastern United States"
-            # elif region_num == 86:
-            #     region_name = "Central America"
-            # elif region_num == 64:
-            #     region_name = "Venezuela"
-            # elif region_num == 54:
-            #     region_name = "Peru"
-            # elif region_num == 56:
-            #     region_name = "Brazil"
-            # elif region_num == 25:
-            #     region_name = "Argentina"
-            # elif region_num == 15:
-            #     region_name = "South Africa"
-            # elif region_num == 9:
-            #     region_name = "Madagascar"
-            # elif region_num == 29:
-            #     region_name = "Congo"
-            # elif region_num == 49:
-            #     region_name = "East Africa"
-            # elif region_num == 67:
-            #     region_name = "North Africa"
-            # elif region_num == 61:
-            #     region_name = "Egypt"
-            # elif region_num == 145:
-            #     region_name = "Iceland"
-            # elif region_num == 127 or region_num == 130:
-            #     region_name = "Great Britain"
-            # elif region_num == 95:
-            #     region_name = "Western Europe"
-            # elif region_num == 94:
-            #     region_name = "Southern Europe"
-            # elif region_num == 122:
-            #     region_name = "Nothern Europe"
-            # elif region_num == 161:
-            #     region_name = "Scandinavia"
-            # elif region_num == 160:
-            #     region_name = "Ukraine"
-            # elif region_num == 78:
-            #     region_name = "Middle East"
-            # elif region_num == 113:
-            #     region_name = "Afghanistan"
-            # elif region_num == 83:
-            #     region_name = "India"
-            # elif region_num == 167:
-            #     region_name = "Ural"
-            # elif region_num == 175:
-            #     region_name = "Siberia"
-            # elif region_num == 172:
-            #     region_name = "Yakutsk"
-            # elif region_num == 144:
-            #     region_name = "Irkutsk"
-            # elif region_num == 168:
-            #     region_name = "Kamchatka"
-            # elif region_num == 120:
-            #     region_name = "Japan"
-            # elif region_num == 118:
-            #     region_name = "Mongolia"
-            # elif region_num == 107:
-            #     region_name = "China"
-            # elif region_num == 69:
-            #     region_name = "Siam"
-            # elif region_num == 28 or region_num == 36 or region_num == 27 or region_num == 17 or region_num == 20:
-            #     region_name = "Indonesia"
-            # elif region_num == 43 or region_num == 44:
-            #     region_name = "New Guinea"
-            # elif region_num ==  14:
-            #     region_name = "Western Australia"
-            # elif region_num == 21:
-            #     region_name = "Eastern Australia"
-            # elif region_num == 176:
-            #     pass #prevent not a region error
-            # elif region_num == 178:
-            #     pass
-            # elif region_num == 170:
-            #     pass
-            # else:
-            #     print("Not a Region")
-    print(region_name)
+    region_input(region_name)
+
+
+
+
+def region_input(name_of_region):
+    global start_terr_name, end_terr_name
+    if start_terr_name == "":
+        start_terr_name = name_of_region
+    elif start_terr_name == name_of_region and end_terr_name == "":
+        start_terr_name = ""
+    elif start_terr_name != "" and end_terr_name == "":
+        end_terr_name = name_of_region
+    elif start_terr_name != "" and end_terr_name == name_of_region:
+        end_terr_name = ""
+    else:
+        output_message("Invalid ")
+
+    update_start_label()
+    update_end_label()
+
 
 
 # opens risk board image
@@ -205,20 +166,12 @@ def update_region(canvas, edges):
     #light background
     labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
     labeled_img[edges != 0] = (0, 0, 0)
-    
-    # functionality: Labels each region with their respective number
-    # for idx, contour in enumerate(regions):
-    #     # Get center point of contour (via moments)
-    #     M = cv2.moments(contour)
-    #     if M["m00"] != 0:
-    #         cx = int(M["m10"] / M["m00"])
-    #         cy = int(M["m01"] / M["m00"])
-    #         cv2.putText(labeled_img, str(idx + 1), (cx, cy),
-    #         cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
+    
     # Functionality: labels 
+    index = 0
     for region_num, region_name in region_to_name.items():
-        if region_num == 27 or region_num == 17 or region_num == 20 or region_num ==36:
+        if region_num == 27 or region_num == 17 or region_num == 20 or region_num ==36 or region_num ==43 or region_num == 130:
             continue
 
             # Skip if the region number is out of bounds
@@ -227,26 +180,31 @@ def update_region(canvas, edges):
         
 
         region = regions[region_num - 1]  # get the contour by index
-
+        ###########################NEED TO CONNECT INDONESIA
         #colors for each region based on owner
+        if game.owners[index] == True:
+            if region_num == 28:
+                #make whole indonesia one color
+                cv2.drawContours(labeled_img, [regions[region_num - 1]], -1, (0,255,0), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num - 2]], -1, (0,255,0), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num + 7]], -1, (0,255,0), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num - 12]], -1, (0,255,0), thickness=cv2.FILLED)
 
-        ##########################################need to implement
-        #if region_name in player:
-        #    cv2.drawContours(labeled_img, [region], -1, (0,255,0), thickness=cv2.FILLED)
-        #if region_name in ai:
-        #    cv2.drawContours(labeled_img, [region], -1, (0,0,255), thickness=cv2.FILLED)
-        
-        ##need to fix MAKES region blue
-        '''
-        index = 0
-        for i in regions:
-            index += 1
-            for region_num in region_to_name.items():
-                if index != region_num:
-                    cv2.drawContours(labeled_img, [i], -1, (255, 0, 0), thickness=cv2.FILLED)
-        if region_num == 163:
-            cv2.drawContours(labeled_img, [region], -1, (0, 0, 255), thickness=cv2.FILLED)  # Blue for Alaska
-            '''
+            cv2.drawContours(labeled_img, [region], -1, (0,255,0), thickness=cv2.FILLED)
+        if game.owners[index]== False:
+            if region_num ==28:
+                cv2.drawContours(labeled_img, [regions[region_num - 1]], -1, (0,0,255), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num - 2]], -1, (0,0,255), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num + 7]], -1, (0,0,255), thickness=cv2.FILLED)
+                cv2.drawContours(labeled_img, [regions[region_num - 12]], -1, (0,0,255), thickness=cv2.FILLED)
+            cv2.drawContours(labeled_img, [region], -1, (0,0,255), thickness=cv2.FILLED)
+
+
+
+
+
+
+
         # Calculate center of the region using image moments
         M = cv2.moments(region)
         if M["m00"] != 0:
@@ -257,40 +215,31 @@ def update_region(canvas, edges):
             cv2.putText(
                 labeled_img,             # image you're writing on
                 region_name,             # name to draw
-                (cx-10, cy),                # location (center of region) shifted to center text
+                (cx-22, cy+5),                # location (center of region) shifted to center text
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,                     # font scale
-                (0, 255, 0),             # green text
+                (0, 0, 0),             # black text
                 1,                       # thickness
                 cv2.LINE_AA              # anti-aliased
             )
             cv2.putText(
                 labeled_img,             # image you're writing on
-                "hi",########################NEED TO CHANGE TO TROOP NUMBER FOR EACH TERRITORY             # name to draw
-                (cx, cy-10),                # location (center of region) shifted to center text
+                str(game.armies[index]),             # CHANGE TO TROOP NUMBER FOR EACH TERRITORY             # name to draw
+                (cx, cy+16),                # location (center of region) shifted to center text
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.4,                     # font scale
-                (0, 255, 0),             # green text
+                (0, 0, 0),             # black text
                 1,                       # thickness
-                cv2.LINE_AA
-            )           # image you're writing on
-
+                cv2.LINE_AA,
+            )           
+        index += 1
             
 
-    open_image(canvas, labeled_img)
-
-
-    
-
-
-
-
-
-
+    open_image(canvas, labeled_img)# image you're writing on
 
 #edge detector
 def detect_edges(canvas):
-    global regions
+    global regions, edges
 
     # Convert to grayscale and detect edges
     gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
@@ -314,12 +263,20 @@ def detect_edges(canvas):
 
 #actual game
 def gamespace():
+    
     root = tk.Tk()
     root.title("Risk Game")
     root.state("zoomed")
 
+    global canvas
     canvas = tk.Label(root)
     canvas.pack()
+
+  
+
+    
+ 
+
 
     #open image and detect edges
     global img_cv
@@ -332,11 +289,102 @@ def gamespace():
     #space does space function
     canvas.bind("<Button-1>", on_click)
 
+    class TextRedirector:
+        def __init__(self, widget):
+            self.widget = widget
+
+        def write(self, text):
+            self.widget.config(state='normal')         # Temporarily unlock
+            self.widget.insert(tk.END, text)           # Insert text
+            self.widget.see(tk.END)                    # Auto-scroll
+            self.widget.config(state='disabled')       # Lock it again
+
+        def flush(self):
+            pass  # Required for Python's I/O system
+
+    #ai output log
+    output_log = ScrolledText(root, width=80, height=5, state='disabled')
+    output_log.pack(padx=10, pady=10)
+
+
+    sys.stdout = TextRedirector(output_log)
+
 
     next_stage_button = tk.Button(root, text="Next Stage", command=next_stage)
     next_stage_button.pack(pady=10)
     next_stage_button.place(x=240,y=530)
-    root.mainloop()
+
+
+
+    global instruction_text, output_text, phase_label, value_label, start_terr_text, end_terr_text
+
+    instruction_text = tk.Label(root, text="")
+    instruction_text.pack()
+
+    global output_text_matrix
+    output_text_matrix = []
+
+    output_text = tk.Label(root, text="")
+    output_text.pack()
+
+    phase_label = tk.Label(root, text="")
+    phase_label.pack()
+
+    start_terr_text = tk.Label(root, text=f"Start Territory: {start_terr_name}")
+    start_terr_text.pack()
+
+
+    end_terr_text = tk.Label(root, text=f"End Territory: {start_terr_name}")
+    end_terr_text.pack()
+
+
+    global max_troops
+    max_troops = 10
+    max_entry = tk.Label(root, text=f"You have {max_troops} troops to deploy")
+    max_entry.pack()
+
+    global troop_var
+    troop_var = tk.StringVar()
+    troop_var.trace_add("write", on_troop_entry_change)  # Live update
+
+    vcmd = (root.register(validate_int_input), "%P")
+    troop_entry = tk.Entry(root, textvariable=troop_var, validate="key", validatecommand=vcmd)
+    troop_entry.pack()
+    
+def validate_int_input(value):
+    return value.isdigit() or value == ""
+
+def on_troop_entry_change(*args):
+    global troop_amount_selection
+    val = troop_var.get()
+    troop_amount_selection = int(val) if val.isdigit() else 0
+    
+    print("Updated troops:", troop_amount_selection)
+
+def output_message(message):
+    output_text_matrix.append(message)
+    output_text.config(text=("".join(output_text_matrix)))
+    root1.after(3000, lambda: (output_text_matrix.pop(0), output_text.config(text=("".join(output_text_matrix)))))
+
+def update_instructions(): 
+    global game_phase
+    match game_phase:
+        case "deploy":
+            instruction_text.config(text="Deployment Phase: Click on your regions to deploy troops.")
+        case "attack":
+            instruction_text.config(text="Attack Phase: Click your region, then click an adjacent enemy region to attack.")
+        case "fortify":
+            instruction_text.config(text="Fortify Phase: Click a region to move troops from, then one to move to.")
+
+
+def update_start_label():
+    start_terr_text.config(text=f"Start Territory: {start_terr_name}")
+
+def update_end_label():
+    end_terr_text.config(text=f"End Territory: {end_terr_name}")
+
+def update_phase_label():
+    value_label.config(text=game_phase)
 
 def on_space(event):
     #closes window and opens a new one
@@ -344,6 +392,11 @@ def on_space(event):
     gamespace()
 
 
+def wait_for_input():
+    root1.wait_variable(user_input)
+
+
+game: GameBoard = GameBoard()
 
 #Start Window
 
@@ -355,7 +408,7 @@ root1.title("Risk Game")
 image_path1 = "interface/risk_background.jpg"
 original_image1 = Image.open(image_path1)
 tk_image1 = ImageTk.PhotoImage(original_image1)
-image_label1 = tk.Label(root1, image=tk_image1)
+image_label1 = tk.Label(root1, image=tk_image1) 
 image_label1.image = tk_image1
 image_label1.pack(padx=5, pady=5)
 
