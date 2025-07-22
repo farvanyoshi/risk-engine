@@ -52,9 +52,9 @@ def attack(board: gameboard.GameBoard) -> None:
         if len(attackable) > 0:
             end = np.random.choice(attackable)
             if board.armies[start] - 1 > board.armies[end]:
-                attacking_troops = random.randrange(int(board.armies[end]) + 1, board.armies[start])
+                attacking_troops = random.randrange(int(board.armies[end]) + 1, int(board.armies[start]))
                 board.battle(start, end, attacking_troops)
-                print(f"Attacked {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {attacking_troops} troops")
+                print(f"Attacked {np.char.title(territory.territory_names[end])} from {np.char.title(territory.territory_names[start])} with {attacking_troops} troops")
                 break
     
 def fortify(board: gameboard.GameBoard) -> None:

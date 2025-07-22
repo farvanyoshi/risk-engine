@@ -77,16 +77,18 @@ def attack(board) -> None:
             print(f"{name.title()} has {army} troops")
         
         final_target: str = ''
-        while True:
+        while not final_target:
             final_target: str = input("What territory are you attacking? (Input nothing to move on) ").lower()
             if final_target == '':
                 break
             final_index: int = territory.indexer(final_target)
 
             if final_index == -1:
+                final_target = ''
                 print("Not a valid place to attack.")
                 continue
             if not possible_targets[final_index]:
+                final_target = ''
                 print("You cannot attack this territory.")
                 continue
 
@@ -98,6 +100,7 @@ def attack(board) -> None:
                         attacking_troops = 0
                         print(f"Invalid number of troops. Please give an integer between 0 and {board.armies[start_index] - 1}")
                 except ValueError:
+                    final_target = ''
                     attacking_troops = 0
                     print(f"Invalid number of troops. Please give an integer between 0 and {board.armies[start_index] - 1}")
             
