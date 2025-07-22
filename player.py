@@ -77,7 +77,7 @@ def attack(board) -> None:
             print(f"{name.title()} has {army} troops")
         
         final_target: str = ''
-        while not final_target:
+        while True:
             final_target: str = input("What territory are you attacking? (Input nothing to move on) ").lower()
             if final_target == '':
                 break

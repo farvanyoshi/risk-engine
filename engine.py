@@ -6,14 +6,20 @@ import territory
 MAX_POSSIBLE_BORDERS = 6
 MIN_POSSIBLE_BORDERS = 2
 
-def deploy_attack(board: gameboard.GameBoard) -> None:
+connectivity: npt.NDArray[np.intp] = territory.adjMatrix.sum(1)
+scaled_connectivity: npt.NDArray[np.float64] = (connectivity - MIN_POSSIBLE_BORDERS) / (MAX_POSSIBLE_BORDERS - MIN_POSSIBLE_BORDERS)
+
+territory_to_continent: npt.NDArray[np.intp] = np.argmax(territory.continents, 0)
+adjacent_in_continent: npt.NDArray[np.bool] = territory.continents[territory_to_continent]
+non_continent_adjacency: npt.NDArray[np.bool] = territory.adjMatrix & ~adjacent_in_continent
+total_foreign_connections: npt.NDArray[np.intp] = non_continent_adjacency.sum(axis = 1)
+scaled_foreign_connections: npt.NDArray[np.intp] = (total_foreign_connections - min(total_foreign_connections)) / (max(total_foreign_connections) - min(total_foreign_connections))
+
+def score_board(board: gameboard.GameBoard) -> None:
     ai_board = ~board.owners
     ai_draft_bonus: int = territory.continent_bonus(False, board.owners)
     deploying: int = max(int(np.count_nonzero(ai_board)) // 3, 3) + ai_draft_bonus
 
-    ''' trying out code
-    need a way to count all the enemy troops around a territory
-    '''
     player_adjacency: npt.NDArray[np.bool] = territory.adjMatrix & board.owners
 
     # shows how much of each continent the ai has left
@@ -29,13 +35,10 @@ def deploy_attack(board: gameboard.GameBoard) -> None:
     allied_borders: npt.NDArray[np.bool] = territory.adjMatrix & ai_board
     scaled_allied_borders: npt.NDArray[np.float64] = allied_borders.sum(1) / MAX_POSSIBLE_BORDERS
 
-    connectivity: npt.NDArray[np.intp] = territory.adjMatrix.sum(1)
-    scaled_connectivity: npt.NDArray[np.float64] = (connectivity - MIN_POSSIBLE_BORDERS) / (MAX_POSSIBLE_BORDERS - MIN_POSSIBLE_BORDERS)
-
-
     # the weights to be used in this project
     continent_weight: float = 1
-    threat_weight: float = 0.833
-    comp_cont_weight: float = 0.667
-    foreign_conn_weight: float = 0.5
-
+    threat_weight: float = 5 / 6
+    comp_cont_weight: float = 2 / 3
+    foreign_conn_weight: float = 1 / 2
+    allied_weight: float = 1 / 3
+    conn_weight: float = 1 / 6
