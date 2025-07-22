@@ -13,7 +13,7 @@ class GameBoard:
     def __init__(self, armies: npt.NDArray[np.intp] = init_armies, owners: npt.NDArray[np.bool] = init_owners) -> None:
         self.armies: npt.NDArray[np.intp] = armies
         self.owners: npt.NDArray[np.bool] = owners
-        self.is_player: bool = owners[0] # Whoever owns afghanistan goes first for some reason
+        self.is_player: bool = True
 
     def is_won(self) -> bool:
         if np.all(self.owners == 0):
