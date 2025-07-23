@@ -8,9 +8,6 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gameboard import GameBoard
 
-import sys
-import os
-
 import player
 # import random_moves
 
