@@ -109,7 +109,7 @@ def attack(board) -> None:
             start = ''
             break
 
-def fortify(board):
+def fortify(board) -> None:
     start_index: int = territory.indexer(input("Where would you like to fortify from? ").lower())
     while start_index == -1:
         start_index = territory.indexer(input("Not a valid territory. Please input another place: ").lower())
@@ -120,8 +120,10 @@ def fortify(board):
     connections = (territory.territory_names[index] for index, connected in enumerate(connection_matrix) if connected)
     print(f"You can fortify:\n {map(str, list(connections))}")
 
-    end = input("Where would you like to fortify? ")
+    end = input("Where would you like to fortify? (enter nothing to skip)")
     while end not in connections:
+        if end == '':
+            return
         print("Invalid territory")
         end = input("Where would you like to fortify? ")
 

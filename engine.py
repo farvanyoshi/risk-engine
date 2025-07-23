@@ -15,7 +15,7 @@ non_continent_adjacency: npt.NDArray[np.bool] = territory.adjMatrix & ~adjacent_
 total_foreign_connections: npt.NDArray[np.integer] = non_continent_adjacency.sum(axis = 1)
 scaled_foreign_connections: npt.NDArray[np.integer] = (total_foreign_connections - min(total_foreign_connections)) / (max(total_foreign_connections) - min(total_foreign_connections))
 
-def score_territories(board: gameboard.GameBoard, weights: npt.NDArray[np.floating] = np.array([1, 5/6, 2/3, 1/2, 1/3, 1/6])) -> tuple[npt.NDArray[np.floating], float]:
+def score_territories(board: gameboard.GameBoard, weights: npt.NDArray[np.floating] = np.array((1, 5/6, 2/3, 1/2, 1/3, 1/6))) -> npt.NDArray[np.floating]:
     ai_board = ~board.owners
 
     # shows which territories around a territory owned by the ai are owned by the player
@@ -51,10 +51,12 @@ def score_territories(board: gameboard.GameBoard, weights: npt.NDArray[np.floati
 
     scaled_params: npt.NDArray[np.floating] = (params - params.min()) / (params.max() - params.min())
 
-    sum_params: float = float(scaled_params.sum())
+    return scaled_params
 
-    return (scaled_params, sum_params)
+def minimax(board: gameboard.GameBoard, depth: int, maxing: bool):
+    overall_score = score_territories(board)
 
+    board_score = overall_score[~board.owners] - overall_score[board.owners]
 
 
 
@@ -62,3 +64,8 @@ def score_territories(board: gameboard.GameBoard, weights: npt.NDArray[np.floati
 ai_draft_bonus: int = territory.continent_bonus(False, board.owners)
 deploying: int = max(int(np.count_nonzero(ai_board)) // 3, 3) + ai_draft_bonus
 '''
+
+
+
+# basically this project is on par to be so goated and they will finish this project tonight and it is so easy to finish this project bc everyone is so locked in and this is so easy to code and print hello world and this is so much fun and this is so so so so so so so good and great because JCN is working on this so diligently
+# by Shaurya
