@@ -111,7 +111,7 @@ continents: npt.NDArray[np.bool] = np.array((
     (0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0)
 ), dtype = bool)
 
-continent_bonuses: npt.NDArray[np.intp] = np.array([3, 7, 5, 5, 2, 2])
+continent_bonuses: npt.NDArray[np.integer] = np.array([3, 7, 5, 5, 2, 2])
 
 # Calculates bonus per continent
 def continent_bonus(player: bool, owners: npt.NDArray[np.bool]) -> int:
