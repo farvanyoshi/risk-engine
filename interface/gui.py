@@ -7,11 +7,25 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gameboard import GameBoard
+import territory
+
+import sys
+import os
 
 import player
 # import random_moves
 
-game_phase = "deploy"
+game_phase = "Deploy"
+
+def loop_game_phase():
+    global game_phase
+    if game_phase == "Deploy":
+        enable_button(confirm_action_button)
+        game_phase = "Attack"
+    elif game_phase == "Attack":
+        game_phase = "Fortify"
+    elif game_phase == "Fortify":
+        game_phase = "Deploy"
 
 game: GameBoard = GameBoard()
 
@@ -19,6 +33,8 @@ start_terr_name: str = ""
 end_terr_name: str = ""
 
 troop_amount_selection: int = 0
+
+available_deployable_troops: int = 0
 
 #gives name of region when clicked
 
@@ -80,36 +96,98 @@ def validate_int_input(new_value):
 
 game: GameBoard = GameBoard()
 
+def confirm_action():
+    input_action()
+    
+def next_stage():
 
-def next_stage(stage):
+
+def confirm_action():
+    global game_phase
     if game.is_won():
+        # Could disable the button for next turn
         print("Game over!")
         return
 
     print(f"It is now the {'player' if game.is_player else 'AI'}'s turn")
 
-    match stage:
-        case "deploy":
-            deployed: int = max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(board.is_player, board.owners)
-            return_value = player.deploy(game, )
+    match game_phase:
+        case "Deploy":
+            location: str = start_terr_name
+            
+            i: int = territory.indexer(location)
 
-    if game.is_player:
-        # player.deploy(game)
-        # player.attack(game)
-        # player.fortify(game)
-        game.is_player = False
-    else:
-        pass
-        # random_moves.deploy(game)
-        # update_region(canvas, edges)
-        # random_moves.attack(game)
-        # update_region(canvas, edges)
-        # random_moves.fortify(game)
-        # update_region(canvas, edges)
-        game.is_player = True
+            if game.owners[i] and troop_amount_selection > 0 and troop_amount_selection <= available_deployable_troops and location != "":
+                game.armies[i] += troop_amount_selection
+                print(f"{troop_amount_selection} troops added to {location.title()}.")
+                available_deployable_troops -= troop_amount_selection
+                if available_deployable_troops == 0:
+                    enable_button(next_stage_button)
+                    disable_button(confirm_action_button)
+                update_phase_label()
+            else: 
+                output_message("Invalid")
 
-    next_stage()
-    root1.mainloop()
+        case "Attack":
+
+            start_index: int = territory.indexer(start_terr_name)
+            end_index: int = territory.indexer(end_terr_name)
+            possible_targets: np.ndarray = territory.adjMatrix[start_index] & (game.owners if game.is_player else ~game.owners)
+
+            if  (0 < attacking_troops < game.armies[start_index]) and start_index != -1 and end_index != -1 and end_terr_name in possible_targets:
+                game.battle(start_index, end_index, attacking_troops)
+                output_message(f"Attacked {end_terr_name.title()} from {start_terr_name.title()} with {troop_amount_selection} troops")
+                loop_game_phase()
+            else: 
+
+                output_message("Invalid")
+            
+
+                final_target: str = ''
+                while True:
+                    final_target: str = input("What territory are you attacking? (Input nothing to move on)").lower()
+                    if final_target == '':
+                        break
+                    final_index: int = territory.indexer(final_target)
+
+                    if final_index == -1:
+                        print("Not a valid place to attack.")
+                        continue
+                    if final_target not in possible_targets:
+                        print("You cannot attack this territory.")
+                        continue
+
+                    attacking_troops: int = 0
+                    while not attacking_troops:
+                        try:
+                            attacking_troops = int(input("How many troops? "))
+                            if attacking_troops < 0 or attacking_troops > game.armies[start_index] - 1:
+                                attacking_troops = 0
+                                print(f"Invalid number of troops. Please give an integer between 0 and {game.armies[start_index] - 1}")
+                        except ValueError:
+                            attacking_troops = 0
+                            print(f"Invalid number of troops. Please give an integer between 0 and {game.armies[start_index] - 1}")
+                    if final_target in possible_targets:
+                        game.battle(start_index, final_index, attacking_troops)
+                        print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
+        case "Fortify":
+            pass
+
+    # if game.is_player:
+    #     # player.deploy(game)
+    #     # player.attack(game)
+    #     # player.fortify(game)
+    #     game.is_player = False
+    # else:
+    #     pass
+    #     # random_moves.deploy(game)
+    #     # update_region(canvas, edges)
+    #     # random_moves.attack(game)
+    #     # update_region(canvas, edges)
+    #     # random_moves.fortify(game)
+    #     # update_region(canvas, edges)
+    #     game.is_player = True
+    # # root1.mainloop()
 
 def on_click(event):
     # region_name = "Not a Region"
@@ -124,13 +202,52 @@ def on_click(event):
                 region_name = region_to_name[region_num]
             except KeyError:
                 pass
+    #if deploy_stage:
+            #exception
+            if region_num != 170 and region_num != 176 and region_num != 74 and region_num != 76 and region_num !=85 and region_num != 96 and region_num != 59 and region_num != 63 and region_num != 37 and region_num != 136 and region_num != 133 and region_num != 152 and region_num != 155 and region_num != 91 and region_num != 117 and region_num != 138 and region_num != 111:
+                update_region(canvas, edges, clicked, region_num)
 
-    region_input(region_name)
+    
+    match game_phase:
+        case "Deploy":
+            deploy_region_input(region_name)
+        case "Attack":
+            attack_region_input(region_name)
+        case "Fortify":
+            fortify_region_input(region_name)
 
 
 
+def deploy_region_input(name_of_region):
+    global start_terr_name, end_terr_name
+    if start_terr_name == "":
+        start_terr_name = name_of_region
+    elif start_terr_name == name_of_region and end_terr_name == "":
+        start_terr_name = ""
+    else:
+        output_message("Invalid ")
 
-def region_input(name_of_region):
+    update_start_label()
+
+
+def attack_region_input(name_of_region):
+    global start_terr_name, end_terr_name
+    if start_terr_name == "":
+        start_terr_name = name_of_region
+    elif start_terr_name == name_of_region and end_terr_name == "":
+        start_terr_name = ""
+    elif start_terr_name != "" and end_terr_name == "":
+        end_terr_name = name_of_region
+    elif start_terr_name != "" and end_terr_name == name_of_region:
+        end_terr_name = ""
+    else:
+        output_message("Invalid ")
+
+    update_start_label()
+    update_end_label()
+
+
+def fortify_region_input(name_of_region):
     global start_terr_name, end_terr_name
     if start_terr_name == "":
         start_terr_name = name_of_region
@@ -166,7 +283,15 @@ def update_region(canvas, edges, clicked, region_numb):
     labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
     labeled_img[edges != 0] = (0, 0, 0)
 
-    
+    if clicked == True:
+        clicked = False
+        region = regions[region_numb - 1]
+        if region_numb == 20 or region_numb == 28 or region_numb == 27 or region_numb ==17 or region_numb ==36:
+            cv2.drawContours(labeled_img, [regions[27]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[26]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[16]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[35]], -1, (255, 0, 0), 10)
+        cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
     # Functionality: labels 
     index = 0
     for region_num, region_name in region_to_name.items():
@@ -185,6 +310,7 @@ def update_region(canvas, edges, clicked, region_numb):
 
         region = regions[region_num - 1]  # get the contour by index
         ###########################NEED TO CONNECT INDONESIA
+
         #colors for each region based on owner
         if game.owners[index] == True:
             if region_num == 28:
@@ -244,6 +370,7 @@ def update_region(canvas, edges, clicked, region_numb):
 #edge detector
 def detect_edges(canvas):
     global regions, edges
+    clicked = False
 
     # Convert to grayscale and detect edges
     gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
@@ -314,9 +441,20 @@ def gamespace():
     sys.stdout = TextRedirector(output_log)
 
 
+    global button_pressed
+    button_pressed = tk.BooleanVar()
+    
+    global next_stage_button
+
     next_stage_button = tk.Button(root, text="Next Stage", command=next_stage)
     next_stage_button.pack(pady=10)
     next_stage_button.place(x=240,y=530)
+
+    global confirm_action
+
+    confirm_action_button = tk.Button(root, text="Next Stage", command=confirm_action)
+    confirm_action_button.pack(pady=10)
+    confirm_action_button.place(x=240,y=600)
 
 
 
@@ -331,7 +469,7 @@ def gamespace():
     output_text = tk.Label(root, text="")
     output_text.pack()
 
-    phase_label = tk.Label(root, text="")
+    phase_label = tk.Label(root, text=f"Current Game Phase: {game_phase}")
     phase_label.pack()
 
     start_terr_text = tk.Label(root, text=f"Start Territory: {start_terr_name}")
@@ -353,8 +491,9 @@ def gamespace():
 
     vcmd = (root.register(validate_int_input), "%P")
     troop_entry = tk.Entry(root, textvariable=troop_var, validate="key", validatecommand=vcmd)
-    troop_entry.pack()
+    troop_entry.pack() 
     
+
 def validate_int_input(value):
     return value.isdigit() or value == ""
 
@@ -363,7 +502,7 @@ def on_troop_entry_change(*args):
     val = troop_var.get()
     troop_amount_selection = int(val) if val.isdigit() else 0
     
-    print("Updated troops:", troop_amount_selection)
+    print("Updated troops:", troop_amount_selection) 
 
 def output_message(message):
     output_text_matrix.append(message)
@@ -397,7 +536,14 @@ def on_space(event):
 
 
 def wait_for_input():
-    root1.wait_variable(user_input)
+    next_stage_button.config(state="normal")
+    button_pressed.set(False)
+    root1.wait_variable(button_pressed)
+    print("Button pressed! Continuing logic...")
+    next_stage_button.config(state="disabled")
+
+def next_stage():
+    button_pressed.set(True)
 
 
 game: GameBoard = GameBoard()
