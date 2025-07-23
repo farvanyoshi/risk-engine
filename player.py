@@ -61,7 +61,7 @@ def attack(board) -> None:
             print("You do not own this territory. Please choose again.")
             start = ''
             continue
-
+        
         # Calculate all targets and show them to the player
         possible_targets: npt.NDArray[np.bool] = territory.adjMatrix[start_index] & ~board.owners
 
@@ -106,6 +106,8 @@ def attack(board) -> None:
             
             board.battle(start_index, final_index, attacking_troops)
             print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
+            start = ''
+            break
 
 def fortify(board):
     start_index: int = territory.indexer(input("Where would you like to fortify from? ").lower())

@@ -43,7 +43,7 @@ def attack(board: gameboard.GameBoard) -> None:
     '''
 
     # randomly choose territories to attack from
-    sampler: npt.NDArray[np.intp] = np.flatnonzero(~board.owners)
+    sampler: npt.NDArray[np.integer] = np.flatnonzero(~board.owners)
     np.random.shuffle(sampler)
 
     # if a possible attack is winnable, do it
