@@ -7,13 +7,15 @@ import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from gameboard import GameBoard
+import territory
+
 import sys
 import os
 
 import player
-import random_moves
+# import random_moves
 
-game_phase = "deploy"
+game_phase = "Deploy"
 
 game: GameBoard = GameBoard()
 
@@ -21,6 +23,8 @@ start_terr_name: str = ""
 end_terr_name: str = ""
 
 troop_amount_selection: int = 0
+
+available_deployable_troops: int = 0
 
 #gives name of region when clicked
 
@@ -75,24 +79,61 @@ region_to_name = {
         21: "Eastern Australia"
     }
 
-
 def validate_int_input(new_value):
     if new_value == "" or new_value.isdigit():
         return True
     return False
-    
 
-def next_stage(stage):
+game: GameBoard = GameBoard()
+
+
+def next_stage():
+    global game_phase
     if game.is_won():
         print("Game over!")
         return
 
     print(f"It is now the {'player' if game.is_player else 'AI'}'s turn")
 
-    match stage:
-        case "deploy":
-            deployed: int = max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(board.is_player, board.owners)
-            return_value = player.deploy(game, )
+    match game_phase:
+        case "Deploy":
+            available_deployable_troops: int = max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(game.is_player, game.owners)
+            while deployed:
+
+                location: str = end_terr_name
+                
+                i: int = territory.indexer(location)
+                if i == -1:
+                    output_message("Invalid territory")
+                    continue
+
+                if game.owners[i]:
+                    try:
+                        placing: int = int(input("How many are you placing? Enter just an integer: "))
+                    except ValueError:
+                        message = "Please enter a positive integer."
+                        print(message)
+                        output_message(message)
+                        continue
+                    
+                    # placing == -1 is an error handling value for when the input is not valid
+                    while placing > deployed or placing < 0:
+                        try:
+                            placing = int(input(f"Invalid number of troops. Enter a number between 0 and {deployed}: "))
+                        except ValueError:
+                            placing = -1
+                            output_message("Please enter a positive integer.")
+                            continue
+
+                    game.armies[i] += placing
+                    print(f"{placing} troops added to {location.title()}.")
+                    deployed -= placing
+                else:
+                    output_message("You don't own that territory!")
+        case "Attack":
+            pass
+        case "Fortify":
+            pass
 
     if game.is_player:
         # player.deploy(game)
@@ -113,7 +154,9 @@ def next_stage(stage):
     root1.mainloop()
 
 def on_click(event):
-    region_name = "Not a Region"
+    # region_name = "Not a Region"
+    clicked = True
+    region_name = ""
     #print(f"Mouse clicked at {event.x}, {event.y}")
     for i, region in enumerate(regions):
         region_num = i+1
@@ -123,13 +166,33 @@ def on_click(event):
                 region_name = region_to_name[region_num]
             except KeyError:
                 pass
+    #if deploy_stage:
+            #exception
+            if region_num != 170 and region_num != 176 and region_num != 74 and region_num != 76 and region_num !=85 and region_num != 96 and region_num != 59 and region_num != 63 and region_num != 37 and region_num != 136 and region_num != 133 and region_num != 152 and region_num != 155 and region_num != 91 and region_num != 117 and region_num != 138 and region_num != 111:
+                update_region(canvas, edges, clicked, region_num)
+
+    
 
     region_input(region_name)
 
+
+
+
 def region_input(name_of_region):
-    global start_terr_name
-    start_terr_name = name_of_region
+    global start_terr_name, end_terr_name
+    if start_terr_name == "":
+        start_terr_name = name_of_region
+    elif start_terr_name == name_of_region and end_terr_name == "":
+        start_terr_name = ""
+    elif start_terr_name != "" and end_terr_name == "":
+        end_terr_name = name_of_region
+    elif start_terr_name != "" and end_terr_name == name_of_region:
+        end_terr_name = ""
+    else:
+        output_message("Invalid ")
+
     update_start_label()
+    update_end_label()
 
 
 # opens risk board image
@@ -145,12 +208,20 @@ def open_image(canvas, img_cv):
 
 
 #########MAKE NEW FUNCTION CALLED UPDATE BOARD NUMB TO UPDATE TROOP NUMBER AND OWNERSHIP
-def update_region(canvas, edges):
+def update_region(canvas, edges, clicked, region_numb):
     #light background
     labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
     labeled_img[edges != 0] = (0, 0, 0)
 
-    
+    if clicked == True:
+        clicked = False
+        region = regions[region_numb - 1]
+        if region_numb == 20 or region_numb == 28 or region_numb == 27 or region_numb ==17 or region_numb ==36:
+            cv2.drawContours(labeled_img, [regions[27]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[26]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[16]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[35]], -1, (255, 0, 0), 10)
+        cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
     # Functionality: labels 
     index = 0
     for region_num, region_name in region_to_name.items():
@@ -161,8 +232,15 @@ def update_region(canvas, edges):
         if region_num - 1 < 0 or region_num - 1 >= len(regions):
             continue
         
+        
+        #if clicked == True:
+        #    clicked = False
+            #if region
+        #    cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
 
         region = regions[region_num - 1]  # get the contour by index
+        ###########################NEED TO CONNECT INDONESIA
+
         #colors for each region based on owner
         if game.owners[index] == True:
             if region_num == 28:
@@ -222,6 +300,7 @@ def update_region(canvas, edges):
 #edge detector
 def detect_edges(canvas):
     global regions, edges
+    clicked = False
 
     # Convert to grayscale and detect edges
     gray = cv2.cvtColor(img_cv, cv2.COLOR_BGR2GRAY)
@@ -239,13 +318,13 @@ def detect_edges(canvas):
     contours, _ = cv2.findContours(edges, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     regions = [cv2.approxPolyDP(cnt, 3, True) for cnt in contours]
 
-    update_region(canvas, edges)
+    update_region(canvas, edges, clicked, "")
 
 
 
 #actual game
 def gamespace():
-
+    
     root = tk.Tk()
     root.title("Risk Game")
     root.state("zoomed")
@@ -254,17 +333,23 @@ def gamespace():
     canvas = tk.Label(root)
     canvas.pack()
 
+  
 
-    #allows only numbers
-    vcmd = (root.register(validate_int_input), "%P")
-    #troop input
-    troop_entry = tk.Entry(root, validate="key", validatecommand=vcmd)
-    troop_entry.pack()
-
-    #How many troops can be entered
-    max_entry = tk.Label(root, text = "You have ") #+ max_troops + " to deploy")
-    max_entry.pack()
     
+ 
+
+
+    #open image and detect edges
+    global img_cv
+    image_path = 'interface/riskboard_resized.jpg'
+    img_cv = cv2.imread(image_path)
+    
+    open_image(canvas,img_cv)
+    detect_edges(canvas)
+
+    #space does space function
+    canvas.bind("<Button-1>", on_click)
+
     class TextRedirector:
         def __init__(self, widget):
             self.widget = widget
@@ -279,76 +364,76 @@ def gamespace():
             pass  # Required for Python's I/O system
 
     #ai output log
-    output_log = ScrolledText(root, width=80, height=20, state='disabled')
+    output_log = ScrolledText(root, width=80, height=5, state='disabled')
     output_log.pack(padx=10, pady=10)
 
 
     sys.stdout = TextRedirector(output_log)
 
 
-
-
-
-    #open image and detect edges
-    global img_cv
-    image_path = 'interface/riskboard_resized.jpg'
-    img_cv = cv2.imread(image_path)
+    global button_pressed
+    button_pressed = tk.BooleanVar()
     
-    open_image(canvas,img_cv)
-    detect_edges(canvas)
-
-    #space does space function
-    canvas.bind("<Button-1>", on_click)
-
+    global next_stage_button
 
     next_stage_button = tk.Button(root, text="Next Stage", command=next_stage)
     next_stage_button.pack(pady=10)
     next_stage_button.place(x=240,y=530)
 
-    slider_value = tk.IntVar()
-
-    # Create the slider
-    slider = tk.Scale(root, from_=1, to=max(game.armies), orient='horizontal',
-                    variable=slider_value, command=update_slider_label)
-    slider.pack()
-
-    
 
 
-
-    global instruction_text, output_text, phase_label, value_label, start_terr_text
+    global instruction_text, output_text, phase_label, value_label, start_terr_text, end_terr_text
 
     instruction_text = tk.Label(root, text="")
     instruction_text.pack()
 
+    global output_text_matrix
+    output_text_matrix = []
+
     output_text = tk.Label(root, text="")
     output_text.pack()
 
-    phase_label = tk.Label(root, text="")
+    phase_label = tk.Label(root, text=f"Current Game Phase: {game_phase}")
     phase_label.pack()
 
-    value_label = tk.Label(root, text="Current value: 0")
-    value_label.pack()
-
-    start_terr_text = tk.Label(root, text=f"First Territory: {start_terr_name}")
+    start_terr_text = tk.Label(root, text=f"Start Territory: {start_terr_name}")
     start_terr_text.pack()
 
-    start_terr_button = tk.Button(root, text="Choose First Terr", command=next_stage)
-    start_terr_button.pack()
 
-
-    end_terr_text = tk.Label(root, text="Second Territory: 0")
+    end_terr_text = tk.Label(root, text=f"End Territory: {start_terr_name}")
     end_terr_text.pack()
 
-    end_terr_button = tk.Button(root, text="Choose Second Terr", command=next_stage)
-    end_terr_button.pack()
+
+    global max_troops
+    max_troops = 10
+    max_entry = tk.Label(root, text=f"You have {max_troops} troops to deploy")
+    max_entry.pack()
+
+    global troop_var
+    troop_var = tk.StringVar()
+    troop_var.trace_add("write", on_troop_entry_change)  # Live update
+
+    vcmd = (root.register(validate_int_input), "%P")
+    troop_entry = tk.Entry(root, textvariable=troop_var, validate="key", validatecommand=vcmd)
+    troop_entry.pack() 
+    
+
+def validate_int_input(value):
+    return value.isdigit() or value == ""
+
+def on_troop_entry_change(*args):
+    global troop_amount_selection
+    val = troop_var.get()
+    troop_amount_selection = int(val) if val.isdigit() else 0
+    
+    print("Updated troops:", troop_amount_selection) 
 
 def output_message(message):
-    output_text.config(output_text.get("1.0", tk.END), message)
+    output_text_matrix.append(message)
+    output_text.config(text=("".join(output_text_matrix)))
+    root1.after(3000, lambda: (output_text_matrix.pop(0), output_text.config(text=("".join(output_text_matrix)))))
 
-    root1.after(3000, lambda: output_text.config(output_text.get("1.0", tk.END)[len(message):]))
-
-def update_instructions():
+def update_instructions(): 
     global game_phase
     match game_phase:
         case "deploy":
@@ -359,15 +444,11 @@ def update_instructions():
             instruction_text.config(text="Fortify Phase: Click a region to move troops from, then one to move to.")
 
 
-
-def update_slider_label():
-    global troop_amount_selection 
-    slider_value = tk.IntVar()
-    troop_amount_selection = slider_value.get()
-    value_label.config(text=f"Current value: {slider_value.get()}")
-
 def update_start_label():
-    start_terr_text.config(text=f"First Territory: {start_terr_name}")
+    start_terr_text.config(text=f"Start Territory: {start_terr_name}")
+
+def update_end_label():
+    end_terr_text.config(text=f"End Territory: {end_terr_name}")
 
 def update_phase_label():
     value_label.config(text=game_phase)
@@ -379,9 +460,17 @@ def on_space(event):
 
 
 def wait_for_input():
-    root1.wait_variable(user_input)
+    next_stage_button.config(state="normal")
+    button_pressed.set(False)
+    root1.wait_variable(button_pressed)
+    print("Button pressed! Continuing logic...")
+    next_stage_button.config(state="disabled")
+
+def next_stage():
+    button_pressed.set(True)
 
 
+game: GameBoard = GameBoard()
 
 #Start Window
 
@@ -403,3 +492,5 @@ text_label.place(relx=0.5, rely=0.8, anchor='center') #centers textbox
 
 root1.bind("<space>", on_space)  # bind space key
 root1.mainloop()
+
+
