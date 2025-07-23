@@ -3,7 +3,9 @@ import numpy as np
 import numpy.typing as npt
 import territory
 
-def deploy(board: gameboard.GameBoard) -> None:
+from interface import gui
+
+def deploy(board: gameboard.GameBoard, end_terr: str, troop_amount: int, troop_available: int) -> int:
     print_territories(board)
     print_continent_fraction(board)
 
@@ -11,17 +13,19 @@ def deploy(board: gameboard.GameBoard) -> None:
     deployed: int = max(int(np.count_nonzero(board.owners == board.is_player)) // 3, 3) + territory.continent_bonus(board.is_player, board.owners)
     while deployed:
         location: str = input(f"You have {deployed} troops to deploy. Where are you deploying? ").strip().lower()
-
+        
         i: int = territory.indexer(location)
         if i == -1:
-            print("Invalid territory")
+            gui.output_message("Invalid territory")
             continue
 
         if board.owners[i]:
             try:
                 placing: int = int(input("How many are you placing? Enter just an integer: "))
             except ValueError:
-                print("Please enter a positive integer.")
+                message = "Please enter a positive integer."
+                print(message)
+                gui.output_message(message)
                 continue
             
             # placing == -1 is an error handling value for when the input is not valid
@@ -30,14 +34,14 @@ def deploy(board: gameboard.GameBoard) -> None:
                     placing = int(input(f"Invalid number of troops. Enter a number between 0 and {deployed}: "))
                 except ValueError:
                     placing = -1
-                    print("Please enter a positive integer.")
+                    gui.output_message("Please enter a positive integer.")
                     continue
 
             board.armies[i] += placing
             print(f"{placing} troops added to {location.title()}.")
             deployed -= placing
         else:
-            print("You don't own that territory!")
+            gui.output_message("You don't own that territory!")
 
 def attack(board) -> None:
     start: str = ''
