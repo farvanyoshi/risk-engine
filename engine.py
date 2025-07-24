@@ -25,6 +25,9 @@ def fortify(board: gameboard.GameBoard, player) -> None:
     owned = board.owners if player else ~board.owners
     connections: npt.NDArray[np.bool] = territory.total_connections(end, owned)
 
+    if not np.any(connections):
+        return
+
     # move troops from the worst remaining territory
     start: int = int((scores)[connections].argmin())
     board.fortify(start, end, int((scores.max() - scores.min()) * board.armies[start]))
@@ -47,8 +50,6 @@ def all_attacks_generator(state: gameboard.GameBoard, player: bool):
     return new_states
 
 def attack(board: gameboard.GameBoard, player):
-
-    
     _, best_board = minimax(board, 1, player)
     np.copyto(board.owners, best_board.owners)
     np.copyto(board.armies, best_board.armies)
