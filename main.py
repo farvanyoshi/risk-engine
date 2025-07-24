@@ -1,6 +1,6 @@
-# import engine
+import engine
 from gameboard import GameBoard
-import random_moves
+# import random_moves
 import player
 
 game: GameBoard = GameBoard()
@@ -12,9 +12,9 @@ while not game.is_won():
         player.fortify(game)
         game.is_player = False
     else:
-        random_moves.deploy(game)
-        random_moves.attack(game)
-        random_moves.fortify(game)
+        engine.deploy(game, False)
+        engine.attack(game, False)
+        engine.fortify(game)
         game.is_player = True
 
         # engine.deploy_attack(game)

@@ -17,6 +17,12 @@ class GameBoard:
         np.random.shuffle(INIT_ARMIES)
         np.random.shuffle(INIT_OWNERS)
 
+    def copy(self):
+        return GameBoard(self.armies.copy(), self.owners.copy())
+
+    def hash(self):
+        return (tuple(self.owners), tuple(self.armies))
+
     def is_won(self) -> bool:
         if np.all(self.owners == 0):
             print("The AI has won the game!")
