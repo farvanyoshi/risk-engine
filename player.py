@@ -117,8 +117,8 @@ def fortify(board) -> None:
 
     # List out all possiblities to the player
     connection_matrix = territory.total_connections(start_index, board.owners)
-    connections = (territory.territory_names[index] for index, connected in enumerate(connection_matrix) if connected)
-    print(f"You can fortify:\n {map(str, list(connections))}")
+    connections = [territory.territory_names[index] for index, connected in enumerate(connection_matrix) if connected]
+    print(f"You can fortify:\n {map(str, connections)}")
 
     end = input("Where would you like to fortify? (enter nothing to skip)")
     while end not in connections:

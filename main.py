@@ -14,7 +14,7 @@ while not game.is_won():
     else:
         engine.deploy(game, False)
         engine.attack(game, False)
-        engine.fortify(game)
+        engine.fortify(game, False)
         game.is_player = True
 
         # engine.deploy_attack(game)
