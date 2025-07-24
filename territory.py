@@ -130,9 +130,7 @@ def indexer(location: str) -> int:
          return -1
 
 # Finds all territories owned by the player (flip the values for the AI)
-def total_connections(terr: int, owners: npt.NDArray[np.bool], player: bool) -> npt.NDArray[np.bool]:
-    if player == 0:
-        owners = ~owners
+def total_connections(terr: int, owners: npt.NDArray[np.bool]) -> npt.NDArray[np.bool]:
     checked: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
     neighbors: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
     neighbors[terr] = True

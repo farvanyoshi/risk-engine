@@ -46,7 +46,6 @@ def attack(board: gameboard.GameBoard) -> None:
     np.random.shuffle(sampler)
 
     # if a possible attack is winnable, do it
-    
     for start in sampler:
         attackable = np.flatnonzero(territory.adjMatrix[start] & board.owners)
         if len(attackable) > 0:
@@ -60,10 +59,10 @@ def attack(board: gameboard.GameBoard) -> None:
 
 def fortify(board: gameboard.GameBoard) -> None:
     start: int = np.random.choice(np.flatnonzero(~board.owners & (board.armies > 1)))
-    connections: npt.NDArray[np.bool] = territory.total_connections(start, board.owners, False)
+    connections: npt.NDArray[np.bool] = territory.total_connections(start, ~board.owners)
     while np.all(connections == 0):
         start = np.random.choice(np.flatnonzero(~board.owners))
-        connections = territory.total_connections(start, board.owners, False)
+        connections = territory.total_connections(start, ~board.owners)
     
     end: int = np.random.choice(np.flatnonzero(connections))
     num_troops: int = random.randrange(1, int(board.armies[start]))

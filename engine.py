@@ -1,71 +1,43 @@
 import gameboard
 import numpy as np
 import numpy.typing as npt
+import scoring
 import territory
 
-MAX_POSSIBLE_BORDERS = 6
-MIN_POSSIBLE_BORDERS = 2
+# def generate_possible_attacks(board: gameboard.GameBoard):
+#     return [np.flatnonzero(board.armies > 1 & ~board.owners)]
 
-connectivity: npt.NDArray[np.integer] = territory.adjMatrix.sum(1)
-scaled_connectivity: npt.NDArray[np.floating] = (connectivity - MIN_POSSIBLE_BORDERS) / (MAX_POSSIBLE_BORDERS - MIN_POSSIBLE_BORDERS)
+def deploy(board: gameboard.GameBoard) -> None:
+    # calculate the troops and territory scores for the ai
+    ai_draft_bonus: int = territory.continent_bonus(False, board.owners)
+    deploying: int = max(int(np.count_nonzero(~board.owners)) // 3, 3) + ai_draft_bonus
+    scores = scoring.deploy_fortify_territory_scoring(board)
 
-territory_to_continent: npt.NDArray[np.integer] = np.argmax(territory.continents, 0)
-adjacent_in_continent: npt.NDArray[np.bool] = territory.continents[territory_to_continent]
-non_continent_adjacency: npt.NDArray[np.bool] = territory.adjMatrix & ~adjacent_in_continent
-total_foreign_connections: npt.NDArray[np.integer] = non_continent_adjacency.sum(axis = 1)
-scaled_foreign_connections: npt.NDArray[np.integer] = (total_foreign_connections - min(total_foreign_connections)) / (max(total_foreign_connections) - min(total_foreign_connections))
+    # Places all the troops in the highest scoring territory
+    board.armies[scores.argmax()] += deploying
 
-def score_territories(board: gameboard.GameBoard, weights: npt.NDArray[np.floating] = np.array((1, 5/6, 2/3, 1/2, 1/3, 1/6))) -> npt.NDArray[np.floating]:
-    ai_board = ~board.owners
+def fortify(board: gameboard.GameBoard) -> None:
+    scores: npt.NDArray[np.floating] = scoring.deploy_fortify_territory_scoring(board)
 
-    # shows which territories around a territory owned by the ai are owned by the player
-    player_adjacency: npt.NDArray[np.bool] = territory.adjMatrix & board.owners
+    # choose the ending territory to be the one with the highest score
+    end: int = int((scores * board.owners).argmax())
 
-    # shows how much of each continent the ai has left
-    engine_continents: npt.NDArray[np.bool] = territory.continents & ai_board
-    continent_percents: npt.NDArray[np.integer] = engine_continents.sum(1) / territory.continents.sum(1) * 100
-    scaled_continent_percents: npt.NDArray[np.floating] = continent_percents / max(continent_percents)
+    # find all territories connected to the end territory
+    connections: npt.NDArray[np.bool] = territory.total_connections(end, ~board.owners)
 
-    # scaled_continent_precents maps out the percentage completed of a continent per continent, so it must be converted into per territory
-    scaled_continent_per_territory: npt.NDArray[np.floating] = territory.continents.T @ scaled_continent_percents
+    # move troops from the worst remaining territory
+    start: int = int((scores)[connections].argmin())
+    board.fortify(start, end, int((scores.max() - scores.min()) * board.armies[start]))
 
-    # sum armies of adjacent enemy troops and divide by troops in said territory to find threat level
-    threat_level: npt.NDArray[np.integer] = (player_adjacency * board.armies).sum(1) / board.armies
-    scaled_threat_level: npt.NDArray[np.integer] = threat_level / threat_level.max()
+def minimax(board: gameboard.GameBoard, depth: int, for_engine: bool):
 
-    # it is important to protect already held continents
-    on_completed_continent: npt.NDArray[np.bool] = np.bitwise_or.reduce(territory.continents & ai_board)
+    if depth == 0 or board.is_won():
+        return scoring.score_board(board)
+    
+    best_score = -np.inf if for_engine else np.inf
+    best_move = None
 
-    # a state with many allied borders is safer, but also less viable to attack from
-    allied_borders: npt.NDArray[np.bool] = territory.adjMatrix & ai_board
-    scaled_allied_borders: npt.NDArray[np.floating] = allied_borders.sum(1) / MAX_POSSIBLE_BORDERS
-
-    params: npt.NDArray[np.floating] = (np.atleast_2d(weights).T * np.array((
-        scaled_continent_per_territory,
-        scaled_threat_level,
-        on_completed_continent,
-        scaled_foreign_connections,
-        scaled_allied_borders,
-        scaled_connectivity
-    ))).sum(0)
-
-    scaled_params: npt.NDArray[np.floating] = (params - params.min()) / (params.max() - params.min())
-
-    return scaled_params
-
-def minimax(board: gameboard.GameBoard, depth: int, maxing: bool):
-    overall_score = score_territories(board)
-
-    board_score = overall_score[~board.owners] - overall_score[board.owners]
-
-
-
-'''
-ai_draft_bonus: int = territory.continent_bonus(False, board.owners)
-deploying: int = max(int(np.count_nonzero(ai_board)) // 3, 3) + ai_draft_bonus
-'''
-
-
+    # TODO: Implement recursion through the minimax tree
 
 # basically this project is on par to be so goated and they will finish this project tonight and it is so easy to finish this project bc everyone is so locked in and this is so easy to code and print hello world and this is so much fun and this is so so so so so so so good and great because JCN is working on this so diligently
 # by Shaurya
