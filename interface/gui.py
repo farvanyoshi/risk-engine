@@ -12,7 +12,6 @@ import territory
 import sys
 import os
 
-import player
 # import random_moves
 
 game_phase = "Deploy"
@@ -34,7 +33,7 @@ end_terr_name: str = ""
 
 troop_amount_selection: int = 0
 
-available_deployable_troops: int = 0
+available_deployable_troops: int = max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(game.is_player, game.owners)
 
 #gives name of region when clicked
 
@@ -96,14 +95,29 @@ def validate_int_input(new_value):
 
 game: GameBoard = GameBoard()
 
+def loop_game_stage():
+    global game_phase
+    if game_phase == "Deploy":
+        enable_button(confirm_action_button)
+        game_phase = "Attack"
+    elif game_phase == "Attack":
+        game_phase = "Fortify"
+    elif game_phase == "Fortify":
+        game_phase = "Deploy"
+
+    update_phase_label()
+
+def next_stage():
+    disable_button(next_stage_button)
+    loop_game_stage()
+
 def confirm_action():
     input_action()
-    
-def next_stage():
 
 
-def confirm_action():
+def input_action():
     global game_phase
+
     if game.is_won():
         # Could disable the button for next turn
         print("Game over!")
@@ -117,7 +131,10 @@ def confirm_action():
             
             i: int = territory.indexer(location)
 
-            if game.owners[i] and troop_amount_selection > 0 and troop_amount_selection <= available_deployable_troops and location != "":
+            output_message(str(game.owners[i]))
+
+            if game.owners[i] and troop_amount_selection > 0 and troop_amount_selection <= available_deployable_troops and location != "" and game.owners[i]:
+                output_message("It works")
                 game.armies[i] += troop_amount_selection
                 print(f"{troop_amount_selection} troops added to {location.title()}.")
                 available_deployable_troops -= troop_amount_selection
@@ -125,8 +142,11 @@ def confirm_action():
                     enable_button(next_stage_button)
                     disable_button(confirm_action_button)
                 update_phase_label()
+                    
             else: 
                 output_message("Invalid")
+
+            output_message(str(game.owners[i]))
 
         case "Attack":
 
@@ -137,11 +157,9 @@ def confirm_action():
             if  (0 < attacking_troops < game.armies[start_index]) and start_index != -1 and end_index != -1 and end_terr_name in possible_targets:
                 game.battle(start_index, end_index, attacking_troops)
                 output_message(f"Attacked {end_terr_name.title()} from {start_terr_name.title()} with {troop_amount_selection} troops")
-                loop_game_phase()
+                loop_game_stage()
             else: 
-
                 output_message("Invalid")
-            
 
                 final_target: str = ''
                 while True:
@@ -203,8 +221,10 @@ def on_click(event):
             except KeyError:
                 pass
     #if deploy_stage:
-            #exception
             if region_num != 170 and region_num != 176 and region_num != 74 and region_num != 76 and region_num !=85 and region_num != 96 and region_num != 59 and region_num != 63 and region_num != 37 and region_num != 136 and region_num != 133 and region_num != 152 and region_num != 155 and region_num != 91 and region_num != 117 and region_num != 138 and region_num != 111:
+                #labeled_img = np.ones((edges.shape[0], 2edges.shape[1], 3), dtype=np.uint8) * 255  # White background
+                #labeled_img[edges != 0] = (0, 0, 0)
+                #cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
                 update_region(canvas, edges, clicked, region_num)
 
     
@@ -217,13 +237,20 @@ def on_click(event):
             fortify_region_input(region_name)
 
 
+    update_region(canvas, edges, clicked, "")
+
+
+            
+    
 
 def deploy_region_input(name_of_region):
     global start_terr_name, end_terr_name
     if start_terr_name == "":
         start_terr_name = name_of_region
+        enable_button(confirm_action_button)
     elif start_terr_name == name_of_region and end_terr_name == "":
         start_terr_name = ""
+        disable_button(confirm_action_button)
     else:
         output_message("Invalid ")
 
@@ -262,6 +289,7 @@ def fortify_region_input(name_of_region):
 
     update_start_label()
     update_end_label()
+
 
 
 
@@ -367,6 +395,8 @@ def update_region(canvas, edges, clicked, region_numb):
 
     open_image(canvas, labeled_img)# image you're writing on
 
+
+
 #edge detector
 def detect_edges(canvas):
     global regions, edges
@@ -450,13 +480,15 @@ def gamespace():
     next_stage_button.pack(pady=10)
     next_stage_button.place(x=240,y=530)
 
-    global confirm_action
+    next_stage_button.config(state="disabled")
 
-    confirm_action_button = tk.Button(root, text="Next Stage", command=confirm_action)
+    global confirm_action_button
+
+    confirm_action_button = tk.Button(root, text="Confirm Action", command=confirm_action)
     confirm_action_button.pack(pady=10)
-    confirm_action_button.place(x=240,y=600)
+    confirm_action_button.place(x=240,y=700)
 
-
+    confirm_action_button.config(state="disabled")
 
     global instruction_text, output_text, phase_label, value_label, start_terr_text, end_terr_text
 
@@ -480,9 +512,7 @@ def gamespace():
     end_terr_text.pack()
 
 
-    global max_troops
-    max_troops = 10
-    max_entry = tk.Label(root, text=f"You have {max_troops} troops to deploy")
+    max_entry = tk.Label(root, text=f"You have {available_deployable_troops} troops to deploy")
     max_entry.pack()
 
     global troop_var
@@ -519,6 +549,11 @@ def update_instructions():
         case "fortify":
             instruction_text.config(text="Fortify Phase: Click a region to move troops from, then one to move to.")
 
+def disable_button(button):
+    button.config(state="disabled")
+
+def enable_button(button):
+    button.config(state="active")
 
 def update_start_label():
     start_terr_text.config(text=f"Start Territory: {start_terr_name}")
@@ -536,14 +571,7 @@ def on_space(event):
 
 
 def wait_for_input():
-    next_stage_button.config(state="normal")
-    button_pressed.set(False)
-    root1.wait_variable(button_pressed)
-    print("Button pressed! Continuing logic...")
-    next_stage_button.config(state="disabled")
-
-def next_stage():
-    button_pressed.set(True)
+    root1.wait_variable(user_input)
 
 
 game: GameBoard = GameBoard()
@@ -568,3 +596,5 @@ text_label.place(relx=0.5, rely=0.8, anchor='center') #centers textbox
 
 root1.bind("<space>", on_space)  # bind space key
 root1.mainloop()
+
+
