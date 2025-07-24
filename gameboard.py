@@ -11,7 +11,6 @@ class GameBoard:
     def __init__(self, armies: npt.NDArray[np.integer] = INIT_ARMIES, owners: npt.NDArray[np.bool] = INIT_OWNERS) -> None:
         self.armies: npt.NDArray[np.integer] = armies
         self.owners: npt.NDArray[np.bool] = owners
-        self.is_player: bool = True
 
         # if multiple gameboards are created, the original order must be shuffled
         np.random.shuffle(INIT_ARMIES)

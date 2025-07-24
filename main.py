@@ -1,21 +1,40 @@
 import engine
 from gameboard import GameBoard
-# import random_moves
 import player
+import random_moves
+import territory
 
-game: GameBoard = GameBoard()
-while not game.is_won():
-    print(f"It is now the {"player" if game.is_player else "AI"}'s turn" )
-    if game.is_player:
-        player.deploy(game)
-        player.attack(game)
-        player.fortify(game)
-        game.is_player = False
-    else:
-        engine.deploy(game, False)
-        engine.attack(game, False)
-        engine.fortify(game, False)
-        game.is_player = True
+def run_game(first_player):
+    game: GameBoard = GameBoard()
+    player = first_player
+    count = 0
+    while not game.is_won():
+        print(f"{"player" if player else "AI"}'s turn" )
+        print(territory.territory_names[game.owners])
+        print(territory.territory_names[~game.owners])
+        random_moves.deploy(game, False)
+        random_moves.attack(game, False)
+        random_moves.fortify(game, False)
 
-        # engine.deploy_attack(game)
-        # engine.fortify(game)
+        print("ai's turn")
+        print(territory.territory_names[game.owners])
+        print(territory.territory_names[~game.owners])
+        engine.deploy(game, True)
+        engine.attack(game, True)
+        engine.fortify(game, True)
+        count += 1
+
+    print(count)
+    return player
+
+run_game(True)
+
+# i = 0
+# player_wins = 0
+# # player = True
+# while i < 10000:
+#     player_wins += run_game(i % 2 == 0)
+#     i += 1
+#     # player = not player
+
+# print(player_wins, "out of", i)

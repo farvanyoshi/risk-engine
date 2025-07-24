@@ -49,6 +49,7 @@ def def_params(board: gameboard.GameBoard) -> npt.NDArray[np.floating]:
     ai_board: npt.NDArray[np.bool] = ~board.owners
 
     # sum armies of adjacent enemy troops and divide by troops in said territory to find threat level
+    board.armies[np.flatnonzero(board.armies == 0)] = 1
     threat_level: npt.NDArray[np.integer] = ((territory.adjMatrix & board.owners) * board.armies).sum(1) / board.armies
     scaled_threat_level: npt.NDArray[np.integer] = threat_level / threat_level.max()
 
@@ -71,7 +72,7 @@ def attack_territory_scoring(board: gameboard.GameBoard, weights = ATTACK_WEIGHT
     # shows how much of each continent the ai has left
     engine_continents: npt.NDArray[np.bool] = territory.continents & ai_board
     continent_percents: npt.NDArray[np.integer] = engine_continents.sum(1) / territory.continents.sum(1) * 100
-    scaled_continent_percents: npt.NDArray[np.floating] = continent_percents / max(continent_percents)
+    scaled_continent_percents: npt.NDArray[np.floating] = continent_percents / (max(continent_percents) or 1)
 
     # scaled_continent_precents maps out the percentage completed of a continent per continent, so it must be converted into per territory
     scaled_continent_per_territory: npt.NDArray[np.floating] = territory.continents.T @ scaled_continent_percents
@@ -89,5 +90,6 @@ def attack_territory_scoring(board: gameboard.GameBoard, weights = ATTACK_WEIGHT
 
     return scale(params)
 
-def score_board(board: gameboard.GameBoard) -> float:
+def score_board(board: gameboard.GameBoard, player: bool) -> float:
+    
     return float((attack_territory_scoring(board) * board.owners).sum())
