@@ -16,16 +16,6 @@ import os
 
 game_phase = "Deploy"
 
-def loop_game_phase():
-    global game_phase
-    if game_phase == "Deploy":
-        enable_button(confirm_action_button)
-        game_phase = "Attack"
-    elif game_phase == "Attack":
-        game_phase = "Fortify"
-    elif game_phase == "Fortify":
-        game_phase = "Deploy"
-
 game: GameBoard = GameBoard()
 
 start_terr_name: str = ""
@@ -33,59 +23,61 @@ end_terr_name: str = ""
 
 troop_amount_selection: int = 0
 
-available_deployable_troops: int = max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(game.is_player, game.owners)
+global available_deployable_troops
 
+available_deployable_troops: int = max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(game.is_player, game.owners)
 #gives name of region when clicked
 
 region_to_name = {
+        113: "Afghanistan",
         163: "Alaska",
-        169: "Northwest Territory",
-        177: "Greenland",
         140: "Alberta",
-        139: "Ontario",
-        143: "Quebec",
-        114: "Western United States",
-        112: "Eastern United States",
-        86: "Central America",
-        64: "Venezuela",
-        54: "Peru",
-        56: "Brazil",
         25: "Argentina",
-        15: "South Africa",
-        9: "Madagascar",
+        56: "Brazil",
+        86: "Central America",
+        107: "China",
         29: "Congo",
         49: "East Africa",
-        67: "North Africa",
+        21: "Eastern Australia",
+        112: "Eastern United States",
         61: "Egypt",
-        145: "Iceland",
         127: "Great Britain",
         130: "Great Britain",
-        95: "Western Europe",
-        94: "Southern Europe",
-        122: "Nothern Europe",
-        161: "Scandinavia",
-        160: "Ukraine",
-        78: "Middle East",
-        113: "Afghanistan",
+        177: "Greenland",
+        145: "Iceland",
         83: "India",
-        167: "Ural",
-        175: "Siberia",
-        172: "Yakutsk",
-        144: "Irkutsk",
-        168: "Kamchatka",
-        120: "Japan",
-        118: "Mongolia",
-        107: "China",
-        69: "Siam",
         28: "Indonesia",
         36: "Indonesia",
         27: "Indonesia",
         17: "Indonesia",
         20: "Indonesia",
+        144: "Irkutsk",
+        120: "Japan",
+        168: "Kamchatka",
+        9: "Madagascar",
+        78: "Middle East",
+        118: "Mongolia",
         43: "New Guinea",
         44: "New Guinea",
+        67: "North Africa",
+        122: "Northern Europe",
+        169: "Northwest Territory",
+        139: "Ontario",
+        54: "Peru",
+        143: "Quebec",
+        160: "Russia",
+        161: "Scandinavia",
+        69: "Siam",
+        175: "Siberia",
+        15: "South Africa",
+        94: "Southern Europe",
+        167: "Ural",
+        64: "Venezuela",
         14: "Western Australia",
-        21: "Eastern Australia"
+        95: "Western Europe",
+        114: "Western United States",
+        172: "Yakutsk"
+
     }
 
 def validate_int_input(new_value):
@@ -99,6 +91,7 @@ def loop_game_stage():
     global game_phase
     if game_phase == "Deploy":
         enable_button(confirm_action_button)
+        enable_button(next_stage_button)
         game_phase = "Attack"
     elif game_phase == "Attack":
         game_phase = "Fortify"
@@ -106,9 +99,9 @@ def loop_game_stage():
         game_phase = "Deploy"
 
     update_phase_label()
+    output_message(game_phase)
 
 def next_stage():
-    disable_button(next_stage_button)
     loop_game_stage()
 
 def confirm_action():
@@ -125,29 +118,36 @@ def input_action():
 
     print(f"It is now the {'player' if game.is_player else 'AI'}'s turn")
 
+    print(game.owners)
+
     match game_phase:
         case "Deploy":
-            location: str = start_terr_name
+            location: str = start_terr_name.lower()
             
             i: int = territory.indexer(location)
 
-            output_message(str(game.owners[i]))
+            global troop_amount_selection, available_deployable_troops
 
-            if game.owners[i] and troop_amount_selection > 0 and troop_amount_selection <= available_deployable_troops and location != "" and game.owners[i]:
+            output_message(str(game.owners[i]))
+            output_message(str(i))
+            output_message(str(start_terr_name))
+
+            if game.owners[i] and troop_amount_selection > 0 and (troop_amount_selection <= available_deployable_troops) and location != "" and game.owners[i]:
                 output_message("It works")
                 game.armies[i] += troop_amount_selection
                 print(f"{troop_amount_selection} troops added to {location.title()}.")
                 available_deployable_troops -= troop_amount_selection
+                update_available_troops_label()
                 if available_deployable_troops == 0:
                     enable_button(next_stage_button)
-                    disable_button(confirm_action_button)
+
                 update_phase_label()
                     
             else: 
                 output_message("Invalid")
 
-            output_message(str(game.owners[i]))
-
+            
+    
         case "Attack":
 
             start_index: int = territory.indexer(start_terr_name)
@@ -187,7 +187,7 @@ def input_action():
                             print(f"Invalid number of troops. Please give an integer between 0 and {game.armies[start_index] - 1}")
                     if final_target in possible_targets:
                         game.battle(start_index, final_index, attacking_troops)
-                        print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
+                        print(f"Attacked {final_target.title()} from {start_terr_name} with {attacking_troops} troops")
         case "Fortify":
             pass
 
@@ -307,6 +307,7 @@ def open_image(canvas, img_cv):
 
 #########MAKE NEW FUNCTION CALLED UPDATE BOARD NUMB TO UPDATE TROOP NUMBER AND OWNERSHIP
 def update_region(canvas, edges, clicked, region_numb):
+
     #light background
     labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
     labeled_img[edges != 0] = (0, 0, 0)
@@ -507,13 +508,13 @@ def gamespace():
     start_terr_text = tk.Label(root, text=f"Start Territory: {start_terr_name}")
     start_terr_text.pack()
 
-
+    global end_terr_text
     end_terr_text = tk.Label(root, text=f"End Territory: {start_terr_name}")
     end_terr_text.pack()
 
-
-    max_entry = tk.Label(root, text=f"You have {available_deployable_troops} troops to deploy")
-    max_entry.pack()
+    global available_troops_label
+    available_troops_label = tk.Label(root, text=f"You have {available_deployable_troops} troops to deploy")
+    available_troops_label.pack()
 
     global troop_var
     troop_var = tk.StringVar()
@@ -556,13 +557,20 @@ def enable_button(button):
     button.config(state="active")
 
 def update_start_label():
+    global start_terr_text
     start_terr_text.config(text=f"Start Territory: {start_terr_name}")
 
 def update_end_label():
+    global end_terr_text
     end_terr_text.config(text=f"End Territory: {end_terr_name}")
 
 def update_phase_label():
+    global value_label
     value_label.config(text=game_phase)
+
+def update_available_troops_label():
+    global available_troops_label
+    available_troops_label.config(text=f"You have {available_deployable_troops} troops to deploy")
 
 def on_space(event):
     #closes window and opens a new one
