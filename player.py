@@ -3,12 +3,12 @@ import numpy as np
 import numpy.typing as npt
 import territory
 
-def deploy(board: gameboard.GameBoard) -> None:
-    print_territories(board)
-    print_continent_fraction(board)
+def deploy(board: gameboard.GameBoard, player: bool) -> None:
+    print_territories(board, player)
+    print_continent_fraction(board, player)
 
     # Allow the player to draft to multiple places on the same turn
-    deployed: int = max(int(np.count_nonzero(board.owners == board.is_player)) // 3, 3) + territory.continent_bonus(board.is_player, board.owners)
+    deployed: int = max(int(np.count_nonzero(board.owners == player)) // 3, 3) + territory.continent_bonus(player, board.owners)
     while deployed:
         location: str = input(f"You have {deployed} troops to deploy. Where are you deploying? ").strip().lower()
 
@@ -39,8 +39,9 @@ def deploy(board: gameboard.GameBoard) -> None:
         else:
             print("You don't own that territory!")
 
-def attack(board) -> None:
+def attack(board, player) -> None:
     start: str = ''
+    owned = board.owners if player else ~board.owners
     while start == '':
         start = input("Where would you like to attack from? (hit the enter key to end your attack phase, or help to see all your territories' troops) ").lower()
 
@@ -48,7 +49,7 @@ def attack(board) -> None:
             return
         elif start == 'help':
             start = ''
-            print_territories(board)
+            print_territories(board, player)
             continue
         
         start_index: int = territory.indexer(start)
@@ -57,13 +58,13 @@ def attack(board) -> None:
             start = ''
             continue
         
-        if not board.owners[start_index]:
+        if not owned[start_index]:
             print("You do not own this territory. Please choose again.")
             start = ''
             continue
         
         # Calculate all targets and show them to the player
-        possible_targets: npt.NDArray[np.bool] = territory.adjMatrix[start_index] & ~board.owners
+        possible_targets: npt.NDArray[np.bool] = territory.adjMatrix[start_index] & ~owned
 
         if np.all(possible_targets == 0):
             print("Cannot attack from there. Choose another territory")
@@ -109,14 +110,15 @@ def attack(board) -> None:
             start = ''
             break
 
-def fortify(board) -> None:
+def fortify(board, player) -> None:
+    owned = board.owners if player else ~board.owners
     start_index: int = territory.indexer(input("Where would you like to fortify from? ").lower())
     while start_index == -1:
         start_index = territory.indexer(input("Not a valid territory. Please input another place: ").lower())
         continue
 
     # List out all possiblities to the player
-    connection_matrix = territory.total_connections(start_index, board.owners)
+    connection_matrix = territory.total_connections(start_index, owned)
     connections = [territory.territory_names[index] for index, connected in enumerate(connection_matrix) if connected]
     print(f"You can fortify:\n {map(str, connections)}")
 
@@ -144,21 +146,22 @@ def fortify(board) -> None:
 
     board.fortify(start_index, end_index, max_troops)
 
-def print_territories(board):
+def print_territories(board, player):
+    owned = board.owners if player else ~board.owners
     # List out all named territories to the player
-    names = np.strings.title(territory.territory_names[board.owners])
+    names = np.strings.title(territory.territory_names[owned])
     soldiers = board.armies[board.owners].astype(str)
     print("Your owned territories & troop counts:")
     print('\n'.join(np.strings.add(names + ', ', soldiers)))
 
-    opp_names = np.strings.title(territory.territory_names[~board.owners])
+    opp_names = np.strings.title(territory.territory_names[~owned])
     opp_soldiers = board.armies[~board.owners].astype(str)    
     print("\nOpponent's owned territories & troop counts:")
     print('\n'.join(np.strings.add(opp_names + ', ', opp_soldiers)))
     
 
-def print_continent_fraction(board):
-    owned_per_continent = np.sum(territory.continents & board.owners, axis = 1)
+def print_continent_fraction(board, player):
+    owned_per_continent = np.sum(territory.continents & (board.owners if player else ~board.owners), axis = 1)
     total_per_continent = np.sum(territory.continents, axis = 1)
     for name, owned, total in zip(territory.continent_names, owned_per_continent, total_per_continent):
         print(f"{owned} of {total} territories controlled in {name}")

@@ -62,7 +62,7 @@ def attack(board: gameboard.GameBoard, player: bool) -> None:
 def fortify(board: gameboard.GameBoard, player: bool) -> None:
     owned = board.owners if player else ~board.owners
     possible_starts = np.flatnonzero(owned & (board.armies > 1))
-    start: int = np.random.choice(possible_starts) if possible_starts.any() else None
+    start: int = np.random.choice(possible_starts) if possible_starts.any() else 0
     if not start: return
     connections: npt.NDArray[np.bool] = territory.total_connections(start, owned)
     while np.all(connections == 0):
