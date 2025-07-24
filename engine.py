@@ -7,27 +7,30 @@ import territory
 # def generate_possible_attacks(board: gameboard.GameBoard):
 #     return [np.flatnonzero(board.armies > 1 & ~board.owners)]
 
-def deploy(board: gameboard.GameBoard) -> None:
+def deploy(board: gameboard.GameBoard, player: bool) -> None:
+    player_owned = board.owners if player else ~board.owners
     # calculate the troops and territory scores for the ai
-    ai_draft_bonus: int = territory.continent_bonus(False, board.owners)
-    deploying: int = max(int(np.count_nonzero(~board.owners)) // 3, 3) + ai_draft_bonus
+    ai_draft_bonus: int = territory.continent_bonus(False, player_owned)
+    deploying: int = max(int(np.count_nonzero(~player_owned)) // 3, 3) + ai_draft_bonus
     scores = scoring.deploy_fortify_territory_scoring(board)
 
     # Places all the troops in the highest scoring territory
     board.armies[scores.argmax()] += deploying
 
-def fortify(board: gameboard.GameBoard) -> None:
+def fortify(board: gameboard.GameBoard, player) -> None:
     scores: npt.NDArray[np.floating] = scoring.deploy_fortify_territory_scoring(board)
 
     # choose the ending territory to be the one with the highest score
     end: int = int((scores * board.owners).argmax())
 
     # find all territories connected to the end territory
-    connections: npt.NDArray[np.bool] = territory.total_connections(end, ~board.owners)
+    owned = board.owners if player else ~board.owners
+    connections: npt.NDArray[np.bool] = territory.total_connections(end, owned)
 
     # move troops from the worst remaining territory
     start: int = int((scores)[connections].argmin())
     board.fortify(start, end, int((scores.max() - scores.min()) * board.armies[start]))
+
 
 def minimax(board: gameboard.GameBoard, depth: int, for_engine: bool):
 
