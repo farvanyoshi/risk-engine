@@ -3,7 +3,7 @@ import random
 import numpy as np
 import numpy.typing as npt
 import territory
-import interface.gui
+
 '''
 Steps:
 - Implement the draft phase (assume best places to place territories are those)
@@ -32,7 +32,6 @@ def deploy(board: gameboard.GameBoard) -> None:
         board.armies[location] += placing
         deployed -= placing
         print(f"Deployed {placing} troops to {territory.territory_names[location].title()}")
-    interface.gui.update_region()
 
 def attack(board: gameboard.GameBoard) -> None:
     '''
@@ -46,21 +45,16 @@ def attack(board: gameboard.GameBoard) -> None:
     sampler: npt.NDArray[np.integer] = np.flatnonzero(~board.owners)
     np.random.shuffle(sampler)
 
-    # if a possible attack is winnable, do it
-
-    attackable_coordinates = np.nonzero(attack_matrix[sampler])
-
     # Find the index of all attackable territories within that range and attack one if able to
-    for i in range(len(attackable_coordinates[0])):
-        start: int = attackable_coordinates[0][i]
-        end: int = attackable_coordinates[1][i]
-
-        if board.armies[start] - 1 > board.armies[end]:
-            attacking_troops = random.randrange(int(board.armies[end]) + 1, board.armies[start])
-            board.battle(start, end, attacking_troops)
-            print(f"Attacked {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {attacking_troops} troops")
-            break
-    interface.gui.update_region()
+    for start in sampler:
+        attackable = np.flatnonzero(territory.adjMatrix[start] & board.owners)
+        if len(attackable) > 0:
+            end = np.random.choice(attackable)
+            if board.armies[start] - 1 > board.armies[end]:
+                attacking_troops = random.randrange(int(board.armies[end]) + 1, int(board.armies[start]))
+                board.battle(start, end, attacking_troops)
+                print(f"Attacked {np.char.title(str(territory.territory_names[end]))} from {str(np.char.title(territory.territory_names[start]))} with {attacking_troops} troops")
+                break
     
 def fortify(board: gameboard.GameBoard) -> None:
     start: int = np.random.choice(np.flatnonzero(~board.owners & (board.armies > 1)))
@@ -73,4 +67,3 @@ def fortify(board: gameboard.GameBoard) -> None:
     num_troops: int = random.randrange(1, int(board.armies[start]))
     board.fortify(start, end, num_troops)
     print(f"Fortified {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {num_troops} troops")
-    interface.gui.update_region()

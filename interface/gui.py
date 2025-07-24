@@ -12,21 +12,8 @@ import territory
 import sys
 import os
 
-# import random_moves
+import random_moves
 
-game_phase = "Deploy"
-
-game: GameBoard = GameBoard()
-
-start_terr_name: str = ""
-end_terr_name: str = ""
-
-troop_amount_selection: int = 0
-
-global available_deployable_troops
-
-available_deployable_troops: int = max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(game.is_player, game.owners)
-#gives name of region when clicked
 
 region_to_name = {
         113: "Afghanistan",
@@ -77,8 +64,54 @@ region_to_name = {
         95: "Western Europe",
         114: "Western United States",
         172: "Yakutsk"
-
     }
+
+name_to_region = {
+    "afghanistan": 113,
+    "alaska": 163,
+    "alberta": 140,
+    "argentina": 25,
+    "brazil": 56,
+    "central america": 86,
+    "china": 107,
+    "congo": 29,
+    "east africa": 49,
+    "eastern australia": 21,
+    "eastern united states": 112,
+    "egypt": 61,
+    "great britain": 127,
+    "greenland": 177,
+    "iceland": 145,
+    "india": 83,
+    "indonesia": 28,
+    "irkutsk": 144,
+    "japan": 120,
+    "kamchatka": 168,
+    "madagascar": 9,
+    "middle east": 78,
+    "mongolia": 118,
+    "new guinea": 43,
+    "north africa": 67,
+    "northern europe": 122,
+    "northwest territory": 169,
+    "ontario": 139,
+    "peru": 54,
+    "quebec": 143,
+    "russia": 160,
+    "scandinavia": 161,
+    "siam": 69,
+    "siberia": 175,
+    "south africa": 15,
+    "southern europe": 94,
+    "ural": 167,
+    "venezuela": 64,
+    "western australia": 14,
+    "western europe": 95,
+    "western united states": 114,
+    "yakutsk": 172
+}
+
+
 
 def validate_int_input(new_value):
     if new_value == "" or new_value.isdigit():
@@ -88,18 +121,40 @@ def validate_int_input(new_value):
 game: GameBoard = GameBoard()
 
 def loop_game_stage():
-    global game_phase
+    global game_phase, available_deployable_troops
     if game_phase == "Deploy":
         enable_button(confirm_action_button)
         enable_button(next_stage_button)
+        set_next_stage_button("Skip Stage")
+        disable_available_troops_label()
         game_phase = "Attack"
     elif game_phase == "Attack":
+        set_next_stage_button("Skip Stage")
         game_phase = "Fortify"
     elif game_phase == "Fortify":
+        ai_play()
+        set_next_stage_button("Next Stage")
         game_phase = "Deploy"
+        disable_button(next_stage_button)
+        available_deployable_troops = calculate_deploy_troop_amount()
+        update_available_troops_label()
+        
+        
+
+    enable_button(confirm_action_button) 
+    clear_territories()
 
     update_phase_label()
     output_message(game_phase)
+
+
+def ai_play():
+    random_moves.deploy(game)
+    random_moves.attack(game)
+    random_moves.fortify(game)
+
+    
+
 
 def next_stage():
     loop_game_stage()
@@ -107,9 +162,12 @@ def next_stage():
 def confirm_action():
     input_action()
 
+def calculate_deploy_troop_amount() -> int:
+    return max(int(np.count_nonzero(game.owners == game.is_player)) // 3, 3) + territory.continent_bonus(game.is_player, game.owners)
+
 
 def input_action():
-    global game_phase
+    global game_phase, first_touch, Even_click, click_idx
 
     if game.is_won():
         # Could disable the button for next turn
@@ -140,7 +198,11 @@ def input_action():
                 update_available_troops_label()
                 if available_deployable_troops == 0:
                     enable_button(next_stage_button)
-
+                    disable_button(confirm_action_button)
+                    clear_territories()
+                    first_touch = None
+                    Even_click = True
+                    click_idx = 0
                 update_phase_label()
                     
             else: 
@@ -149,48 +211,61 @@ def input_action():
             
     
         case "Attack":
+            start_index: int = territory.indexer(start_terr_name.lower())
+            end_index: int = territory.indexer(end_terr_name.lower())
 
-            start_index: int = territory.indexer(start_terr_name)
-            end_index: int = territory.indexer(end_terr_name)
-            possible_targets: np.ndarray = territory.adjMatrix[start_index] & (game.owners if game.is_player else ~game.owners)
+            output_message(str(start_index))
+            output_message(" ")
+            output_message(str(end_index))
 
-            if  (0 < attacking_troops < game.armies[start_index]) and start_index != -1 and end_index != -1 and end_terr_name in possible_targets:
-                game.battle(start_index, end_index, attacking_troops)
+            possible_targets: np.ndarray = territory.adjMatrix[start_index] & ~game.owners
+
+
+            if  (0 < troop_amount_selection and troop_amount_selection < game.armies[start_index]) and (start_index != -1) and (end_index != -1) and possible_targets[end_index] and game.owners[start_index] and not game.owners[end_index] and not np.all(possible_targets == 0):
+                game.battle(start_index, end_index, troop_amount_selection)
                 output_message(f"Attacked {end_terr_name.title()} from {start_terr_name.title()} with {troop_amount_selection} troops")
-                loop_game_stage()
+                set_next_stage_button("Next Stage")
+                output_message("Attack Done!")
+                clear_territories()
+
+                first_touch = None
+                Even_click = True
+                click_idx = 0
             else: 
+            
                 output_message("Invalid")
-
-                final_target: str = ''
-                while True:
-                    final_target: str = input("What territory are you attacking? (Input nothing to move on)").lower()
-                    if final_target == '':
-                        break
-                    final_index: int = territory.indexer(final_target)
-
-                    if final_index == -1:
-                        print("Not a valid place to attack.")
-                        continue
-                    if final_target not in possible_targets:
-                        print("You cannot attack this territory.")
-                        continue
-
-                    attacking_troops: int = 0
-                    while not attacking_troops:
-                        try:
-                            attacking_troops = int(input("How many troops? "))
-                            if attacking_troops < 0 or attacking_troops > game.armies[start_index] - 1:
-                                attacking_troops = 0
-                                print(f"Invalid number of troops. Please give an integer between 0 and {game.armies[start_index] - 1}")
-                        except ValueError:
-                            attacking_troops = 0
-                            print(f"Invalid number of troops. Please give an integer between 0 and {game.armies[start_index] - 1}")
-                    if final_target in possible_targets:
-                        game.battle(start_index, final_index, attacking_troops)
-                        print(f"Attacked {final_target.title()} from {start_terr_name} with {attacking_troops} troops")
         case "Fortify":
-            pass
+            start_index = territory.indexer(start_terr_name.lower())
+            end_index = territory.indexer(end_terr_name.lower())
 
+            connection_matrix = territory.total_connections(start_index, game.owners, True)
+            connections = {
+                territory.territory_names[index].lower()
+                for index, connected in enumerate(connection_matrix)
+                if connected
+            }
+
+            max_troops = game.armies[start_index] - 1
+
+            output_message(str(max_troops))
+
+            output_message(f"Connections: {connections}")
+            output_message(" ")
+            output_message(f"{end_terr_name.lower()} in connections? {end_terr_name.lower() in connections}")
+            output_message(" ")
+            output_message(f"Troop amount <= max? {troop_amount_selection <= max_troops}")
+
+            if end_terr_name.lower() in connections and troop_amount_selection <= max_troops:
+                game.fortify(start_index, end_index, troop_amount_selection)  # NOT max_troops
+                output_message("Fortified!")
+                set_next_stage_button("Next Stage")
+                disable_button(confirm_action_button)
+                clear_territories()
+                first_touch = None
+                Even_click = True
+                click_idx = 0
+            else:
+                output_message("Invalid")
     # if game.is_player:
     #     # player.deploy(game)
     #     # player.attack(game)
@@ -218,24 +293,17 @@ def on_click(event):
             print(f"Clicked inside region {region_num}")
             try:
                 region_name = region_to_name[region_num]
+                match game_phase:
+                    case "Deploy":
+                        deploy_region_input(region_name)
+                    case "Attack":
+                        attack_region_input(region_name)
+                    case "Fortify":
+                        fortify_region_input(region_name)
             except KeyError:
                 pass
-    #if deploy_stage:
             if region_num != 170 and region_num != 176 and region_num != 74 and region_num != 76 and region_num !=85 and region_num != 96 and region_num != 59 and region_num != 63 and region_num != 37 and region_num != 136 and region_num != 133 and region_num != 152 and region_num != 155 and region_num != 91 and region_num != 117 and region_num != 138 and region_num != 111:
-                #labeled_img = np.ones((edges.shape[0], 2edges.shape[1], 3), dtype=np.uint8) * 255  # White background
-                #labeled_img[edges != 0] = (0, 0, 0)
-                #cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
                 update_region(canvas, edges, clicked, region_num)
-
-    
-    match game_phase:
-        case "Deploy":
-            deploy_region_input(region_name)
-        case "Attack":
-            attack_region_input(region_name)
-        case "Fortify":
-            fortify_region_input(region_name)
-
 
     update_region(canvas, edges, clicked, "")
 
@@ -269,9 +337,11 @@ def attack_region_input(name_of_region):
         end_terr_name = ""
     else:
         output_message("Invalid ")
-
+    
     update_start_label()
     update_end_label()
+    
+
 
 
 def fortify_region_input(name_of_region):
@@ -290,6 +360,136 @@ def fortify_region_input(name_of_region):
     update_start_label()
     update_end_label()
 
+def click_contours(edges):
+    global start_terr_name, end_terr_name, start_contour, end_contour
+
+    output_message(start_terr_name)
+    output_message(end_terr_name)
+
+    labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
+    labeled_img[edges != 0] = (0, 0, 0)
+
+    try: 
+        start_region_num = name_to_region[start_terr_name]
+        if start_region_num:
+            start_contour = regions[start_region_num - 1]
+
+        if start_region_num == 20 or start_region_num == 28 or start_region_num == 27 or start_region_num == 17 or start_region_num == 36:
+            cv2.drawContours(labeled_img, [regions[27]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[26]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[16]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [regions[35]], -1, (255, 0, 0), 10)
+        cv2.drawContours(labeled_img, [start_contour], -1, (255, 0, 0), 10)
+        
+        output_message(str(start_region_num))
+
+        return labeled_img
+
+    except KeyError:
+        pass     
+
+    try:
+        end_region_num = name_to_region[end_terr_name]
+        if end_region_num:
+            end_contour = regions[end_region_num - 1]
+
+        if start_region_num == 20 or start_region_num == 28 or start_region_num == 27 or start_region_num == 17 or start_region_num == 36:
+            cv2.drawContours(labeled_img, [regions[27]], -1, (0, 255, 255), 10)
+            cv2.drawContours(labeled_img, [regions[26]], -1, (0, 255, 255), 10)
+            cv2.drawContours(labeled_img, [regions[16]], -1, (0, 255, 255), 10)
+            cv2.drawContours(labeled_img, [regions[35]], -1, (0, 255, 255), 10)
+        cv2.drawContours(labeled_img, [end_contour], -1, (0, 255, 255), 10)
+
+        output_message(str(end_region_num))
+
+        return labeled_img
+    
+    except KeyError:
+        pass
+    
+    return
+
+
+    
+    
+
+    
+
+def singleclick(region_numb, region, edges):
+    global first_touch
+    global Even_click
+    global click_idx
+    labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
+    labeled_img[edges != 0] = (0, 0, 0)
+
+    if region_numb == first_touch:
+        first_touch = region_numb
+        if Even_click == True:
+            Even_click = False
+            return labeled_img
+        elif Even_click == False:
+            Even_click = True
+            if region_numb == 20 or region_numb == 28 or region_numb == 27 or region_numb ==17 or region_numb ==36:
+                cv2.drawContours(labeled_img, [regions[27]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[26]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[16]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[35]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
+            first_touch = region_numb
+            return labeled_img
+    else:
+        if region_numb != first_touch and Even_click == True and click_idx>0:
+            return
+        else:
+            Even_click = True
+            if region_numb == 20 or region_numb == 28 or region_numb == 27 or region_numb ==17 or region_numb ==36:
+                cv2.drawContours(labeled_img, [regions[27]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[26]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[16]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[35]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
+            click_idx +=1
+            first_touch = region_numb
+            return labeled_img
+
+
+def doubleclick(labeled_img, region_numb, region):
+    global first_touch, even_click, click_idx
+
+    if region_numb == first_touch:
+        first_touch = region_numb
+        if even_click == True:
+            even_click = False
+            return labeled_img
+        elif even_click == False:
+            even_click = True
+            if region_numb == 20 or region_numb == 28 or region_numb == 27 or region_numb ==17 or region_numb ==36:
+                cv2.drawContours(labeled_img, [regions[27]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[26]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[16]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[35]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
+            first_touch = region_numb
+            return labeled_img
+    else:
+        if region_numb != first_touch and even_click == True and click_idx>0:
+            if region_numb != first_touch and even_click == True and click_idx>0:
+                first_touch_region = regions[first_touch -1]
+                cv2.drawContours(labeled_img, [first_touch_region], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [region], -1, (0, 255, 255), 10)
+                return labeled_img
+        else:
+            even_click = True
+            if region_numb == 20 or region_numb == 28 or region_numb == 27 or region_numb ==17 or region_numb ==36:
+                cv2.drawContours(labeled_img, [regions[27]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[26]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[16]], -1, (255, 0, 0), 10)
+                cv2.drawContours(labeled_img, [regions[35]], -1, (255, 0, 0), 10)
+            cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
+            click_idx +=1
+            first_touch = region_numb
+            return labeled_img
+
 
 
 
@@ -305,22 +505,36 @@ def open_image(canvas, img_cv):
     canvas.image = img_tk
 
 
-#########MAKE NEW FUNCTION CALLED UPDATE BOARD NUMB TO UPDATE TROOP NUMBER AND OWNERSHIP
 def update_region(canvas, edges, clicked, region_numb):
 
     #light background
     labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
     labeled_img[edges != 0] = (0, 0, 0)
+    
+    global first_touch
 
-    if clicked == True:
-        clicked = False
-        region = regions[region_numb - 1]
-        if region_numb == 20 or region_numb == 28 or region_numb == 27 or region_numb ==17 or region_numb ==36:
-            cv2.drawContours(labeled_img, [regions[27]], -1, (255, 0, 0), 10)
-            cv2.drawContours(labeled_img, [regions[26]], -1, (255, 0, 0), 10)
-            cv2.drawContours(labeled_img, [regions[16]], -1, (255, 0, 0), 10)
-            cv2.drawContours(labeled_img, [regions[35]], -1, (255, 0, 0), 10)
-        cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
+    # if clicked == True:
+    #     clicked = False
+    #     region = regions[region_numb - 1]
+    #     labeled_img = click_contours(edges)
+
+    # if clicked == True:
+    #     clicked = False
+    #     region = regions[region_numb - 1]
+    #     match game_phase:
+    #         case "Deploy":
+    #             labeled_img = singleclick(region_numb, region, edges)
+    #         case "Attack":
+    #             labeled_img = doubleclick(region_numb, region, edges)
+    #         case "Fortify":
+    #             labeled_img = doubleclick(region_numb, region, edges)
+        
+    
+
+
+
+
+        
     # Functionality: labels 
     index = 0
     for region_num, region_name in region_to_name.items():
@@ -331,14 +545,8 @@ def update_region(canvas, edges, clicked, region_numb):
         if region_num - 1 < 0 or region_num - 1 >= len(regions):
             continue
         
-        
-        #if clicked == True:
-        #    clicked = False
-            #if region
-        #    cv2.drawContours(labeled_img, [region], -1, (255, 0, 0), 10)
 
         region = regions[region_num - 1]  # get the contour by index
-        ###########################NEED TO CONNECT INDONESIA
 
         #colors for each region based on owner
         if game.owners[index] == True:
@@ -357,7 +565,7 @@ def update_region(canvas, edges, clicked, region_numb):
                 cv2.drawContours(labeled_img, [regions[region_num + 7]], -1, (0,0,255), thickness=cv2.FILLED)
                 cv2.drawContours(labeled_img, [regions[region_num - 12]], -1, (0,0,255), thickness=cv2.FILLED)
             cv2.drawContours(labeled_img, [region], -1, (0,0,255), thickness=cv2.FILLED)
-
+    
 
 
 
@@ -524,6 +732,12 @@ def gamespace():
     troop_entry = tk.Entry(root, textvariable=troop_var, validate="key", validatecommand=vcmd)
     troop_entry.pack() 
     
+def clear_territories():
+    global start_terr_name, end_terr_name
+    start_terr_name = ""
+    end_terr_name = ""
+    update_start_label()
+
 
 def validate_int_input(value):
     return value.isdigit() or value == ""
@@ -566,24 +780,47 @@ def update_end_label():
 
 def update_phase_label():
     global value_label
-    value_label.config(text=game_phase)
+    phase_label.config(text=f"Current Game Phase: {game_phase}")
 
 def update_available_troops_label():
     global available_troops_label
     available_troops_label.config(text=f"You have {available_deployable_troops} troops to deploy")
+
+def disable_available_troops_label():
+    global available_troops_label
+    available_troops_label.config(text="")
+
+def set_next_stage_button(new_text):
+    global next_stage_button
+    next_stage_button.config(text=new_text)
 
 def on_space(event):
     #closes window and opens a new one
     root1.destroy()
     gamespace()
 
+# Running actual game stuff
+game: GameBoard = GameBoard()
 
-def wait_for_input():
-    root1.wait_variable(user_input)
-
+game_phase = "Deploy"
 
 game: GameBoard = GameBoard()
 
+start_terr_name: str = ""
+end_terr_name: str = ""
+
+troop_amount_selection: int = 0
+
+global available_deployable_troops
+
+available_deployable_troops: int = calculate_deploy_troop_amount()
+#gives name of region when clicked
+
+#keep track of clicks
+#################################NEED TO RESET BE
+first_touch = None
+Even_click = True
+click_idx = 0
 #Start Window
 
 root1 = tk.Tk()
