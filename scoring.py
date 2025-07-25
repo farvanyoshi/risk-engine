@@ -7,8 +7,8 @@ MAX_POSSIBLE_BORDERS = 6
 MIN_POSSIBLE_BORDERS = 2
 
 # weights for each stage, used in evaluation
-DEPLOY_WEIGHTS: npt.NDArray[np.floating] = np.array((1, 3/4, 1/2, 1/4))
-ATTACK_WEIGHTS: npt.NDArray[np.floating] = np.array((1, 5/6, 2/3, 1/2, 1/3, 1/6))
+DEPLOY_WEIGHTS: npt.NDArray[np.floating] = np.array((1, 2/3, 1/3))
+ATTACK_WEIGHTS: npt.NDArray[np.floating] = np.array((1, 4/5, 3/5, 2/5, 1/5))
 FORTIFY_WEIGHTS: npt.NDArray[np.floating] = np.array(())
 
 OPTIMAL_BORDERING_RATIO = 0.5
@@ -51,26 +51,21 @@ def def_params(board: gameboard.GameBoard) -> npt.NDArray[np.floating]:
     # sum armies of adjacent enemy troops and divide by troops in said territory to find threat level
     board.armies[np.flatnonzero(board.armies == 0)] = 1
     threat_level: npt.NDArray[np.integer] = ((territory.adjMatrix & board.owners) * board.armies).sum(1) / board.armies
-    scaled_threat_level: npt.NDArray[np.integer] = threat_level / threat_level.max()
+    scaled_threat_level: npt.NDArray[np.floating] = threat_level / (threat_level.max() or 1)
 
     # it is important to protect already held continents
     on_completed_continent: npt.NDArray[np.bool] = np.bitwise_or.reduce(territory.continents & ai_board)
 
-    # a state with many allied borders is safer, but also less viable to attack from
-    
-    ally_connectivity_scores: npt.NDArray[np.floating] = allying_score(ai_board)
+    return np.array((scaled_threat_level, on_completed_continent, scaled_foreign_connections), dtype=float)
 
-    return np.array((scaled_threat_level, on_completed_continent, scaled_foreign_connections, ally_connectivity_scores), dtype = np.floating)
-
-def deploy_fortify_territory_scoring(board: gameboard.GameBoard, weights: npt.NDArray[np.floating] = DEPLOY_WEIGHTS) -> npt.NDArray[np.floating]:
+def deploy_fortify_territory_scoring(board: gameboard.GameBoard, weights: npt.NDArray[np.floating] = DEPLOY_WEIGHTS):
     params: npt.NDArray[np.floating] = (np.atleast_2d(weights).T * def_params(board)).sum(0)
     return scale(params)
 
-def attack_territory_scoring(board: gameboard.GameBoard, weights = ATTACK_WEIGHTS) -> npt.NDArray[np.floating]:
-    ai_board = ~board.owners
-
+def attack_territory_scoring(board: gameboard.GameBoard, player: bool, weights = ATTACK_WEIGHTS) -> npt.NDArray[np.floating]:
+    owned = board.owners if player else ~board.owners
     # shows how much of each continent the ai has left
-    engine_continents: npt.NDArray[np.bool] = territory.continents & ai_board
+    engine_continents: npt.NDArray[np.bool] = territory.continents & owned
     continent_percents: npt.NDArray[np.integer] = engine_continents.sum(1) / territory.continents.sum(1) * 100
     scaled_continent_percents: npt.NDArray[np.floating] = continent_percents / (max(continent_percents) or 1)
 
@@ -84,12 +79,10 @@ def attack_territory_scoring(board: gameboard.GameBoard, weights = ATTACK_WEIGHT
         base_params[0],
         base_params[1],
         base_params[2],
-        base_params[3],
         scaled_connectivity
     ))).sum(0)
 
     return scale(params)
 
 def score_board(board: gameboard.GameBoard, player: bool) -> float:
-    
-    return float((attack_territory_scoring(board) * board.owners).sum())
+    return attack_territory_scoring(board, player).sum()

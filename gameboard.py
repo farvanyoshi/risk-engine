@@ -6,6 +6,9 @@ import numpy.typing as npt
 INIT_ARMIES: npt.NDArray[np.integer] = np.array([1, 2, 3] * 14)
 INIT_OWNERS: npt.NDArray[np.bool] = np.array([0, 1] * 21, dtype = bool)
 
+np.random.shuffle(INIT_ARMIES)
+np.random.shuffle(INIT_OWNERS)
+
 # Contains the common game code to both the player and AI
 class GameBoard:
     def __init__(self, armies: npt.NDArray[np.integer] = INIT_ARMIES, owners: npt.NDArray[np.bool] = INIT_OWNERS) -> None:
@@ -18,9 +21,6 @@ class GameBoard:
 
     def copy(self):
         return GameBoard(self.armies.copy(), self.owners.copy())
-
-    def hash(self):
-        return (tuple(self.owners), tuple(self.armies))
 
     def is_won(self) -> bool:
         if np.all(self.owners == 0):

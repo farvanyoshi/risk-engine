@@ -9,25 +9,26 @@ def run_game(first_player):
     player = first_player
     count = 0
     while not game.is_won():
-        print(f"{"player" if player else "AI"}'s turn" )
-        print(territory.territory_names[game.owners])
-        print(territory.territory_names[~game.owners])
-        random_moves.deploy(game, False)
-        random_moves.attack(game, False)
-        random_moves.fortify(game, False)
+        # print(f"{"player" if player else "AI"}'s turn" )
+        # print(territory.territory_names[game.owners])
+        # print(territory.territory_names[~game.owners])
+        engine.deploy(game, player)
+        engine.attack(game, player)
+        engine.fortify(game, player)
 
-        print("ai's turn")
-        print(territory.territory_names[game.owners])
-        print(territory.territory_names[~game.owners])
-        engine.deploy(game, True)
-        engine.attack(game, True)
-        engine.fortify(game, True)
+        # print("ai's turn")
+        # print(territory.territory_names[game.owners])
+        # print(territory.territory_names[~game.owners])
+        random_moves.deploy(game, not player)
+        random_moves.attack(game, not player)
+        random_moves.fortify(game, not player)
         count += 1
+        player = not player
 
     print(count)
-    return player
+    return not player
 
-run_game(True)
+print(run_game(True))
 
 # i = 0
 # player_wins = 0
