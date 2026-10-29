@@ -6,6 +6,7 @@ import numpy as np
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import cards
 import gameboard
 from gameboard import GameBoard
 import engine
@@ -144,6 +145,7 @@ def loop_game_stage():
 
     update_phase_label()
     update_instructions()
+    refresh_deploy_controls()
     output_message(game_phase)
 
 def is_human(player: int) -> bool:
@@ -152,6 +154,12 @@ def is_human(player: int) -> bool:
 # Passes the turn to the next player still in the game
 def end_turn():
     global current_player, turns
+
+    # capturing a territory this turn earns the top card of the deck
+    card = game.end_turn(current_player)
+    if card is not None:
+        print(f"{gameboard.player_name(current_player, num_humans)} earned a card: {cards.card_name(card)}")
+
     current_player = game.next_player(current_player)
     turns += 1
     update_player_label()
@@ -163,20 +171,107 @@ def end_turn():
         # AI turns run one at a time on a timer so the window keeps updating
         disable_button(next_stage_button)
         disable_button(confirm_action_button)
+        refresh_deploy_controls()
         instruction_text.config(text=f"{gameboard.player_name(current_player, num_humans)} is playing...")
         root.after(AI_TURN_DELAY, ai_play)
 
 def start_human_turn():
     global game_phase, available_deployable_troops
+    game.start_turn(current_player)
     game_phase = "Deploy"
     available_deployable_troops = game.deploy_count(current_player)
     set_next_stage_button("Next Stage")
-    disable_button(next_stage_button)
-    enable_button(confirm_action_button)
     clear_territories()
     update_available_troops_label()
     update_phase_label()
     update_instructions()
+    refresh_deploy_controls()
+
+def is_deploy_phase() -> bool:
+    return game_phase in ("Deploy", "Card Deploy")
+
+# Turns the deploy and trade buttons on or off: the player can't move on while troops are left or a trade is forced
+def refresh_deploy_controls():
+    update_cards_label()
+    if not is_deploy_phase() or not is_human(current_player) or game.is_won():
+        disable_button(trade_best_button)
+        disable_button(trade_button)
+        return
+
+    forced: bool = game.must_trade(current_player)
+    has_set: bool = bool(cards.all_sets(game.hands[current_player]))
+    for button in (trade_best_button, trade_button):
+        (enable_button if has_set else disable_button)(button)
+    (enable_button if available_deployable_troops > 0 else disable_button)(confirm_action_button)
+
+    if forced:
+        disable_button(next_stage_button)
+        instruction_text.config(text=f"You have {len(game.hands[current_player])} cards, so you must trade a set (Trade Best Set, or type card numbers and press Trade).")
+        return
+    update_instructions()
+
+    if available_deployable_troops == 0:
+        if game_phase == "Card Deploy":
+            back_to_attack()
+        else:
+            enable_button(next_stage_button)
+    else:
+        disable_button(next_stage_button)
+
+# Hands are open information (the deck order is public anyway), so this shows the current player's cards
+def update_cards_label():
+    hand = game.hands[current_player]
+    held = "  ".join(f"{number}. {cards.card_name(card)}" for number, card in enumerate(hand, 1)) or "none"
+    others = ", ".join(f"{gameboard.PLAYER_COLORS[p]} {len(game.hands[p])}" for p in game.alive_players() if p != current_player)
+    cards_text.config(text=f"{gameboard.PLAYER_COLORS[current_player]}'s cards: {held}   |   Next set: {cards.set_value(game.sets_traded)} troops   |   Others hold: {others}")
+
+def trade_best():
+    trade_set(cards.best_set(game.hands[current_player], game.owned(current_player)))
+
+def trade_selected():
+    hand = game.hands[current_player]
+    try:
+        traded = [hand[int(number) - 1] for number in trade_var.get().replace(',', ' ').split()]
+    except (ValueError, IndexError):
+        traded = None
+    trade_set(traded)
+
+def trade_set(traded):
+    global available_deployable_troops
+    if not is_deploy_phase() or traded is None or not cards.is_valid_set(traded):
+        output_message("Not a set: pick three of the same symbol, one of each symbol, or any two cards with a wild")
+        return
+    gained, bonus = game.trade(current_player, traded)
+    available_deployable_troops += gained
+    message = cards.trade_message(gameboard.PLAYER_COLORS[current_player], traded, gained, bonus)
+    print(message)
+    output_message(message)
+    trade_var.set("")
+    update_available_troops_label()
+    update_region()
+    refresh_deploy_controls()
+
+# Taking an eliminated player's cards and ending up with 6 or more means trading and placing those troops before attacking again
+def enter_card_deploy():
+    global game_phase, available_deployable_troops
+    game_phase = "Card Deploy"
+    available_deployable_troops = 0
+    disable_button(next_stage_button)
+    clear_territories()
+    update_available_troops_label()
+    update_phase_label()
+    refresh_deploy_controls()
+
+def back_to_attack():
+    global game_phase
+    game_phase = "Attack"
+    disable_available_troops_label()
+    enable_button(confirm_action_button)
+    enable_button(next_stage_button)
+    set_next_stage_button("Next Stage")
+    update_phase_label()
+    update_instructions()
+    update_cards_label()
 
 def ai_play():
     if num_humans == 0 and turns >= gameboard.AI_ONLY_TURN_LIMIT:
@@ -187,6 +282,7 @@ def ai_play():
 
     ai = random_moves if easy_ai else engine
     alive_before = game.alive_players()
+    game.start_turn(current_player)
     ai.deploy(game, current_player)
     ai.attack(game, current_player)
     if not game.is_won():
@@ -199,7 +295,7 @@ def ai_play():
 def announce_eliminations(alive_before):
     for p in alive_before:
         if not game.is_alive(p):
-            message = f"{gameboard.player_name(p, num_humans)} has been eliminated!"
+            message = f"{gameboard.player_name(p, num_humans)} has been eliminated, and {gameboard.PLAYER_COLORS[current_player]} takes their cards!"
             print(message)
             output_message(message)
 
@@ -212,6 +308,8 @@ def check_game_over() -> bool:
     instruction_text.config(text=message)
     disable_button(next_stage_button)
     disable_button(confirm_action_button)
+    disable_button(trade_best_button)
+    disable_button(trade_button)
     return True
 
 def next_stage():
@@ -227,7 +325,7 @@ def input_action():
         return
 
     match game_phase:
-        case "Deploy":
+        case "Deploy" | "Card Deploy":
             i: int = territory.indexer(start_terr_name.lower())
 
             if i != -1 and game.owners[i] == current_player and 0 < troop_amount_selection <= available_deployable_troops:
@@ -235,10 +333,8 @@ def input_action():
                 print(f"{gameboard.PLAYER_COLORS[current_player]} added {troop_amount_selection} troops to {start_terr_name.title()}.")
                 available_deployable_troops -= troop_amount_selection
                 update_available_troops_label()
-                if available_deployable_troops == 0:
-                    enable_button(next_stage_button)
-                    disable_button(confirm_action_button)
                 clear_territories()
+                refresh_deploy_controls()
             else:
                 output_message("Invalid: click one of your territories and enter a number of troops you have left")
 
@@ -258,6 +354,10 @@ def input_action():
                 if check_game_over():
                     update_region()
                     return
+                if game.must_trade(current_player, cards.ELIMINATION_TRADE_HAND):
+                    output_message("You took their cards: trade down to 4 or fewer, then place the troops")
+                    enter_card_deploy()
+                update_cards_label()
             else:
                 output_message("Invalid: click your territory, then a bordering enemy, and send between 1 and one less than your troops")
 
@@ -285,7 +385,7 @@ def on_click(event):
             except KeyError:
                 continue
             match game_phase:
-                case "Deploy":
+                case "Deploy" | "Card Deploy":
                     deploy_region_input(region_name)
                 case "Attack" | "Fortify":
                     two_region_input(region_name)
@@ -449,8 +549,12 @@ def gamespace():
     troop_entry = tk.Entry(root, textvariable=troop_var, validate="key", validatecommand=vcmd)
     troop_entry.pack()
 
+    global cards_text
+    cards_text = tk.Label(root, text="")
+    cards_text.pack()
+
     # buttons sit in a row under the troop entry so they never cover the labels
-    global next_stage_button, confirm_action_button
+    global next_stage_button, confirm_action_button, trade_best_button, trade_button, trade_var
     buttons = tk.Frame(root)
     buttons.pack(pady=5)
 
@@ -461,6 +565,16 @@ def gamespace():
     next_stage_button.pack(side=tk.LEFT, padx=10)
     disable_button(next_stage_button)
 
+    # trading cards: the best set, or the card numbers typed in the box (like "1 3 4")
+    trade_best_button = tk.Button(buttons, text="Trade Best Set", command=trade_best)
+    trade_best_button.pack(side=tk.LEFT, padx=(30, 5))
+    trade_var = tk.StringVar()
+    tk.Entry(buttons, textvariable=trade_var, width=8).pack(side=tk.LEFT)
+    trade_button = tk.Button(buttons, text="Trade", command=trade_selected)
+    trade_button.pack(side=tk.LEFT, padx=5)
+    disable_button(trade_best_button)
+    disable_button(trade_button)
+
     print("Players: " + ", ".join(gameboard.player_name(p, num_humans) for p in range(game.num_players)))
     update_player_label()
     print(f"It is now {gameboard.player_name(current_player, num_humans)}'s turn")
@@ -468,6 +582,7 @@ def gamespace():
         start_human_turn()
     else:
         disable_button(confirm_action_button)
+        refresh_deploy_controls()
         instruction_text.config(text=f"{gameboard.player_name(current_player, num_humans)} is playing...")
         root.after(AI_TURN_DELAY, ai_play)
 
@@ -491,7 +606,9 @@ def output_message(message):
 def update_instructions():
     match game_phase:
         case "Deploy":
-            instruction_text.config(text="Deployment Phase: Click one of your regions, type a troop amount, and press Confirm Action.")
+            instruction_text.config(text="Deployment Phase: Click one of your regions, type a troop amount, and press Confirm Action. Trade cards for more troops.")
+        case "Card Deploy":
+            instruction_text.config(text="Card Deploy: place the troops from your traded cards, then you can keep attacking.")
         case "Attack":
             instruction_text.config(text="Attack Phase: Click your region, then an adjacent enemy region, type a troop amount, and press Confirm Action.")
         case "Fortify":
