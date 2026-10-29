@@ -24,15 +24,14 @@ Steps:
 '''
 
 def deploy(board: gameboard.GameBoard, player: bool) -> None:
-    owned = board.owners if player else ~board.owners
-    deployed: int = max(int(np.count_nonzero(owned)) // 3, 3) + territory.continent_bonus(player, owned)
-    # print(f"The AI has {deployed} troops to deploy")
+    owned = board.owned(player)
+    deployed: int = board.deploy_count(player)
     while deployed > 0:
         placing: int = random.randrange(1, deployed + 1)
         location: int = random.choice(np.flatnonzero(owned)) # np.flatzero(~board.owners) finds the indices of all territories owned by the engine
         board.armies[location] += placing
         deployed -= placing
-        # print(f"Deployed {placing} troops to {territory.territory_names[location].title()}")
+        print(f"Deployed {placing} troops to {territory.territory_names[location].title()}")
 
 def attack(board: gameboard.GameBoard, player: bool) -> None:
     '''
@@ -42,7 +41,7 @@ def attack(board: gameboard.GameBoard, player: bool) -> None:
     Choose a random number of troops to attack
     '''
 
-    owned = board.owners if player else ~board.owners
+    owned = board.owned(player)
 
     # randomly choose territories to attack from
     sampler: npt.NDArray[np.integer] = np.flatnonzero(owned)
@@ -56,19 +55,20 @@ def attack(board: gameboard.GameBoard, player: bool) -> None:
             if board.armies[start] - 1 > board.armies[end]:
                 attacking_troops = random.randrange(int(board.armies[end]) + 1, int(board.armies[start]))
                 board.battle(start, end, attacking_troops)
-                # print(f"Attacked {np.char.title(territory.territory_names[end])} from {np.char.title(territory.territory_names[start])} with {attacking_troops} troops")
+                print(f"Attacked {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {attacking_troops} troops")
                 break
     
 def fortify(board: gameboard.GameBoard, player: bool) -> None:
-    owned = board.owners if player else ~board.owners
+    owned = board.owned(player)
     possible_starts = np.flatnonzero(owned & (board.armies > 1))
-    start: int = np.random.choice(possible_starts) if possible_starts.any() else 0
-    if not start: return
-    connections: npt.NDArray[np.bool] = territory.total_connections(start, owned)
-    while np.all(connections == 0):
+    if possible_starts.size == 0:
         return
-    
+    start: int = int(np.random.choice(possible_starts))
+    connections: npt.NDArray[np.bool] = territory.total_connections(start, owned)
+    if not np.any(connections):
+        return
+
     end: int = np.random.choice(np.flatnonzero(connections))
     num_troops: int = random.randrange(1, int(board.armies[start]))
     board.fortify(start, end, num_troops)
-    # print(f"Fortified {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {num_troops} troops")
+    print(f"Fortified {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {num_troops} troops")
