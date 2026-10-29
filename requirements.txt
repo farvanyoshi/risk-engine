@@ -1,0 +1,5 @@
+numpy>=2.0
+
+# only needed for the GUI (python main.py --gui)
+opencv-python
+pillow
