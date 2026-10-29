@@ -7,16 +7,16 @@ import territory
 DEPTH = 1
 MAX_ATTACKS_PER_TURN = 42
 
-def deploy(board: gameboard.GameBoard, player: bool) -> None:
+def deploy(board: gameboard.GameBoard, player: int) -> None:
     deploying: int = board.deploy_count(player)
     scores: npt.NDArray[np.floating] = scoring.deploy_fortify_territory_scoring(board, player)
 
     # Places all the troops in the highest scoring territory the player owns
     location: int = int(scores.argmax())
     board.armies[location] += deploying
-    print(f"Deployed {deploying} troops to {territory.territory_names[location].title()}")
+    print(f"{gameboard.PLAYER_COLORS[player]} deployed {deploying} troops to {territory.territory_names[location].title()}")
 
-def attack(board: gameboard.GameBoard, player: bool, depth: int = DEPTH) -> None:
+def attack(board: gameboard.GameBoard, player: int, depth: int = DEPTH) -> None:
     # keep making the best attack until no attack improves the board
     for _ in range(MAX_ATTACKS_PER_TURN):
         if board.is_won():
@@ -28,21 +28,26 @@ def attack(board: gameboard.GameBoard, player: bool, depth: int = DEPTH) -> None
 
         start, end, attacking_troops = best_move
         board.battle(start, end, attacking_troops)
-        print(f"Attacked {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {attacking_troops} troops")
+        print(f"{gameboard.PLAYER_COLORS[player]} attacked {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {attacking_troops} troops")
 
-# Every attack that captures a territory, sending all but one troop
-def all_attacks(board: gameboard.GameBoard, player: bool) -> list[tuple[int, int, int]]:
+# Every attack that captures a territory, either sending all but one troop,
+# or sending only enough that the territory left behind can't be captured by its other enemy neighbors
+def all_attacks(board: gameboard.GameBoard, player: int) -> list[tuple[int, int, int]]:
     owned = board.owned(player)
     moves: list[tuple[int, int, int]] = []
     for start in np.flatnonzero(owned & (board.armies > 1)):
-        attacking_troops = int(board.armies[start] - 1)
-        for end in np.flatnonzero(territory.adjMatrix[start] & ~owned):
-            if attacking_troops > board.armies[end]:
-                moves.append((int(start), int(end), attacking_troops))
+        all_in = int(board.armies[start] - 1)
+        enemy_neighbors = np.flatnonzero(territory.adjMatrix[start] & ~owned)
+        for end in enemy_neighbors:
+            other_enemies = board.armies[enemy_neighbors[enemy_neighbors != end]]
+            keep = max(int(other_enemies.max()) - 1 if other_enemies.size else 1, 1)
+            for attacking_troops in {all_in, int(board.armies[start]) - keep}:
+                if attacking_troops > board.armies[end] and attacking_troops >= 1:
+                    moves.append((int(start), int(end), attacking_troops))
     return moves
 
 # Looks `depth` attacks ahead and returns the best reachable score with the first attack to get there
-def minimax_attack(board: gameboard.GameBoard, player: bool, depth: int) -> tuple[float, tuple[int, int, int] | None]:
+def minimax_attack(board: gameboard.GameBoard, player: int, depth: int) -> tuple[float, tuple[int, int, int] | None]:
     if depth == 0 or board.is_won():
         return scoring.score_board(board, player), None
 
@@ -59,7 +64,7 @@ def minimax_attack(board: gameboard.GameBoard, player: bool, depth: int) -> tupl
 
     return best_score, best_move
 
-def fortify(board: gameboard.GameBoard, player: bool) -> None:
+def fortify(board: gameboard.GameBoard, player: int) -> None:
     owned = board.owned(player)
     scores: npt.NDArray[np.floating] = scoring.deploy_fortify_territory_scoring(board, player)
 
@@ -76,7 +81,7 @@ def fortify(board: gameboard.GameBoard, player: bool) -> None:
     start: int = int(candidates[scores[candidates].argmin()])
     transferring: int = int(board.armies[start] - 1)
     board.fortify(start, end, transferring)
-    print(f"Fortified {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {transferring} troops")
+    print(f"{gameboard.PLAYER_COLORS[player]} fortified {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {transferring} troops")
 
 
 # basically this project is on par to be so goated and they will finish this project tonight and it is so easy to finish this project bc everyone is so locked in and this is so easy to code and print hello world and this is so much fun and this is so so so so so so so good and great because JCN is working on this so diligently

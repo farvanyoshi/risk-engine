@@ -10,8 +10,8 @@ MIN_POSSIBLE_BORDERS = 2
 DEPLOY_WEIGHTS: npt.NDArray[np.floating] = np.array((1, 2/3, 1/3))
 ATTACK_WEIGHTS: npt.NDArray[np.floating] = np.array((1, 4/5, 3/5, 2/5, 1/5))
 
-# how much a board score values territories, troops, and continent bonuses
-BOARD_WEIGHTS: npt.NDArray[np.floating] = np.array((1, 1, 1))
+# how much a board score values territories, troops, continent bonuses, and (as a penalty) territories an enemy could take next turn
+BOARD_WEIGHTS: npt.NDArray[np.floating] = np.array((1, 1, 1, -3))
 
 OPTIMAL_BORDERING_RATIO = 0.5
 
@@ -48,7 +48,7 @@ def allying_score(owners: npt.NDArray[np.bool]) -> npt.NDArray[np.floating]:
         (1 - ally_ratio) / (1 - OPTIMAL_BORDERING_RATIO)
     )
 
-def def_params(board: gameboard.GameBoard, player: bool) -> npt.NDArray[np.floating]:
+def def_params(board: gameboard.GameBoard, player: int) -> npt.NDArray[np.floating]:
     owned: npt.NDArray[np.bool] = board.owned(player)
 
     # sum armies of adjacent enemy troops and divide by troops in said territory to find threat level
@@ -62,12 +62,15 @@ def def_params(board: gameboard.GameBoard, player: bool) -> npt.NDArray[np.float
 
     return np.array((scaled_threat_level, on_completed_continent, scaled_foreign_connections), dtype = float)
 
-# Scores only the player's own territories; enemy territories get -inf so they are never picked
-def deploy_fortify_territory_scoring(board: gameboard.GameBoard, player: bool, weights: npt.NDArray[np.floating] = DEPLOY_WEIGHTS) -> npt.NDArray[np.floating]:
+# Scores only the player's own territories that border an enemy; every other territory gets -inf so it is never picked
+# (troops on a territory surrounded by allies can never attack or defend)
+def deploy_fortify_territory_scoring(board: gameboard.GameBoard, player: int, weights: npt.NDArray[np.floating] = DEPLOY_WEIGHTS) -> npt.NDArray[np.floating]:
+    owned: npt.NDArray[np.bool] = board.owned(player)
+    on_border: npt.NDArray[np.bool] = owned & (territory.adjMatrix & ~owned).any(1)
     params: npt.NDArray[np.floating] = (np.atleast_2d(weights).T * def_params(board, player)).sum(0)
-    return np.where(board.owned(player), scale(params), -np.inf)
+    return np.where(on_border if on_border.any() else owned, scale(params), -np.inf)
 
-def attack_territory_scoring(board: gameboard.GameBoard, player: bool, weights = ATTACK_WEIGHTS) -> npt.NDArray[np.floating]:
+def attack_territory_scoring(board: gameboard.GameBoard, player: int, weights = ATTACK_WEIGHTS) -> npt.NDArray[np.floating]:
     owned = board.owned(player)
     # shows how much of each continent the player has
     engine_continents: npt.NDArray[np.bool] = territory.continents & owned
@@ -89,14 +92,18 @@ def attack_territory_scoring(board: gameboard.GameBoard, player: bool, weights =
 
     return scale(params)
 
-# Higher is better for the given player: valuable territories held, share of all troops, and continent bonuses
-def score_board(board: gameboard.GameBoard, player: bool, weights: npt.NDArray[np.floating] = BOARD_WEIGHTS) -> float:
+# Higher is better for the given player: valuable territories held, share of all troops, continent bonuses, and few exposed territories
+def score_board(board: gameboard.GameBoard, player: int, weights: npt.NDArray[np.floating] = BOARD_WEIGHTS) -> float:
     if board.is_won():
         return np.inf if board.winner() == player else -np.inf
 
     owned = board.owned(player)
     territory_value: float = float((1 + attack_territory_scoring(board, player))[owned].sum()) / 42
     troop_share: float = float(board.armies[owned].sum() / board.armies.sum())
-    bonus_share: float = territory.continent_bonus(player, board.owners) / float(territory.continent_bonuses.sum())
+    bonus_share: float = territory.continent_bonus(owned) / float(territory.continent_bonuses.sum())
 
-    return float(weights @ np.array((territory_value, troop_share, bonus_share)))
+    # a territory is exposed if the biggest neighboring enemy stack could capture it
+    biggest_enemy_neighbor: npt.NDArray[np.integer] = ((territory.adjMatrix & ~owned) * board.armies).max(1)
+    exposed_share: float = float(np.count_nonzero(owned & (biggest_enemy_neighbor - 1 > board.armies))) / 42
+
+    return float(weights @ np.array((territory_value, troop_share, bonus_share, exposed_share)))
