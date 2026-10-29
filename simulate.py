@@ -6,6 +6,7 @@ import time
 
 import numpy as np
 
+import cards
 import engine
 import gameboard
 import random_moves
@@ -22,11 +23,14 @@ def run_game(num_players: int, first_player: int) -> tuple[int | None, int]:
     current = first_player
     while not game.is_won() and turns < MAX_ROUNDS * num_players:
         ai = engine if current == 0 else random_moves
+        game.start_turn(current)
         ai.deploy(game, current)
         ai.attack(game, current)
         if not game.is_won():
             ai.fortify(game, current)
+            game.end_turn(current)
         assert (game.armies >= 1).all(), "a territory was left with no troops"
+        assert sum(len(hand) for hand in game.hands) + len(game.draw_pile) + len(game.discard_pile) == len(cards.DECK_ORDER), "a card went missing"
         current = game.next_player(current)
         turns += 1
     return game.winner(), turns

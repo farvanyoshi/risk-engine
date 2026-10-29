@@ -1,3 +1,4 @@
+import cards
 import gameboard
 import random
 import numpy as np
@@ -23,22 +24,46 @@ Steps:
     - assign every bordering territory all the draft troops, and find how to reach the most score
 '''
 
-def deploy(board: gameboard.GameBoard, player: int) -> None:
-    owned = board.owned(player)
-    deployed: int = board.deploy_count(player)
-    while deployed > 0:
-        placing: int = random.randrange(1, deployed + 1)
-        location: int = random.choice(np.flatnonzero(owned)) # np.flatnonzero(owned) finds the indices of all territories owned by this player
-        board.armies[location] += placing
-        deployed -= placing
-        print(f"{gameboard.PLAYER_COLORS[player]} deployed {placing} troops to {territory.territory_names[location].title()}")
+# After each attack, the chance of stopping the attack phase
+STOP_CHANCE = 0.1
+MAX_ATTACKS_PER_TURN = 42
 
+def deploy(board: gameboard.GameBoard, player: int) -> None:
+    place_troops(board, player, board.deploy_count(player) + trade_cards(board, player))
+
+# Only trades when forced to, picking any valid set. Returns the troops gained
+def trade_cards(board: gameboard.GameBoard, player: int) -> int:
+    troops: int = 0
+    while board.must_trade(player):
+        traded: list[int] = random.choice(cards.all_sets(board.hands[player]))
+        gained, bonus = board.trade(player, traded)
+        troops += gained
+        print(cards.trade_message(gameboard.PLAYER_COLORS[player], traded, gained, bonus))
+    return troops
+
+# Puts all the troops on one random territory that borders an enemy, so they can be used to attack
+def place_troops(board: gameboard.GameBoard, player: int, deployed: int) -> None:
+    if deployed <= 0:
+        return
+    owned = board.owned(player)
+    border = np.flatnonzero(owned & (territory.adjMatrix & ~owned).any(1))
+    location: int = int(random.choice(border if border.size else np.flatnonzero(owned)))
+    board.armies[location] += deployed
+    print(f"{gameboard.PLAYER_COLORS[player]} deployed {deployed} troops to {territory.territory_names[location].title()}")
+
+# Keeps making random attacks it can win, stopping at random or when there are none left
 def attack(board: gameboard.GameBoard, player: int) -> None:
+    for _ in range(MAX_ATTACKS_PER_TURN):
+        if board.is_won() or not random_attack(board, player) or random.random() < STOP_CHANCE:
+            return
+
+def random_attack(board: gameboard.GameBoard, player: int) -> bool:
     '''
-    Pick only 1 random owned territory
+    Pick random owned territories
     Check attackable territories
     Pick an attackable territory
     Choose a random number of troops to attack
+    Returns whether an attack was made
     '''
 
     owned = board.owned(player)
@@ -56,7 +81,12 @@ def attack(board: gameboard.GameBoard, player: int) -> None:
                 attacking_troops = random.randrange(int(board.armies[end]) + 1, int(board.armies[start]))
                 board.battle(start, end, attacking_troops)
                 print(f"{gameboard.PLAYER_COLORS[player]} attacked {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {attacking_troops} troops")
-                break
+
+                # taking an eliminated player's cards can force a trade, and those troops are placed right away
+                if board.must_trade(player, cards.ELIMINATION_TRADE_HAND):
+                    place_troops(board, player, trade_cards(board, player))
+                return True
+    return False
     
 def fortify(board: gameboard.GameBoard, player: int) -> None:
     owned = board.owned(player)

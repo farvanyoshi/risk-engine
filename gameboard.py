@@ -1,5 +1,6 @@
 import numpy as np
 import numpy.typing as npt
+import cards
 import territory
 
 MIN_PLAYERS = 2
@@ -38,8 +39,21 @@ class GameBoard:
         self.armies: npt.NDArray[np.integer] = np.random.permutation(INIT_ARMIES) if armies is None else armies
         self.owners: npt.NDArray[np.integer] = np.random.permutation(np.arange(42) % num_players) if owners is None else owners
 
+        # cards: the draw pile is always in the same order, and traded cards are reused in the order they were traded
+        self.draw_pile: list[int] = list(cards.DECK_ORDER)
+        self.discard_pile: list[int] = []
+        self.hands: list[list[int]] = [[] for _ in range(num_players)]
+        self.sets_traded: int = 0
+        self.captured_this_turn: bool = False
+
     def copy(self):
-        return GameBoard(self.num_players, self.armies.copy(), self.owners.copy())
+        board = GameBoard(self.num_players, self.armies.copy(), self.owners.copy())
+        board.draw_pile = self.draw_pile.copy()
+        board.discard_pile = self.discard_pile.copy()
+        board.hands = [hand.copy() for hand in self.hands]
+        board.sets_traded = self.sets_traded
+        board.captured_this_turn = self.captured_this_turn
+        return board
 
     def owned(self, player: int) -> npt.NDArray[np.bool]:
         return self.owners == player
@@ -97,8 +111,15 @@ class GameBoard:
     def battle(self, start: int, end: int, attacking_troops: int) -> None:
         self.armies[start] -= attacking_troops
         if attacking_troops > self.armies[end]:
+            defender = int(self.owners[end])
             self.armies[end] = attacking_troops - self.armies[end]
             self.owners[end] = self.owners[start]
+            self.captured_this_turn = True
+
+            # eliminating a player hands their cards to the attacker
+            if not self.is_alive(defender):
+                self.hands[self.owners[start]] += self.hands[defender]
+                self.hands[defender] = []
         elif attacking_troops == self.armies[end]:
             self.armies[end] = 1
         else:
@@ -107,3 +128,42 @@ class GameBoard:
     def fortify(self, start: int, end: int, transferring_troops: int) -> None:
         self.armies[start] -= transferring_troops
         self.armies[end] += transferring_troops
+
+    def start_turn(self, player: int) -> None:
+        self.captured_this_turn = False
+
+    # A player who captured a territory this turn takes the top card. Returns the card, or None
+    def end_turn(self, player: int) -> int | None:
+        if not self.captured_this_turn:
+            return None
+        self.captured_this_turn = False
+
+        # when the draw pile runs out, traded cards are reused in the order they were traded
+        if not self.draw_pile:
+            self.draw_pile, self.discard_pile = self.discard_pile, []
+        if not self.draw_pile:
+            return None
+
+        card = self.draw_pile.pop(0)
+        self.hands[player].append(card)
+        return card
+
+    def must_trade(self, player: int, hand_size: int = cards.MUST_TRADE_HAND) -> bool:
+        return len(self.hands[player]) >= hand_size
+
+    # Trades a set of cards. Returns the troops to deploy and the territory that got the +2 bonus (or None)
+    def trade(self, player: int, traded: list[int]) -> tuple[int, int | None]:
+        if not cards.is_valid_set(traded) or not all(card in self.hands[player] for card in traded):
+            raise ValueError("That is not a set of cards in your hand")
+
+        for card in traded:
+            self.hands[player].remove(card)
+        self.discard_pile += traded
+
+        troops = cards.set_value(self.sets_traded)
+        self.sets_traded += 1
+
+        bonus = cards.bonus_territory(traded, self.owned(player))
+        if bonus is not None:
+            self.armies[bonus] += cards.TERRITORY_BONUS
+        return troops, bonus

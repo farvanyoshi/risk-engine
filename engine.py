@@ -1,3 +1,4 @@
+import cards
 import gameboard
 import numpy as np
 import numpy.typing as npt
@@ -8,13 +9,29 @@ DEPTH = 1
 MAX_ATTACKS_PER_TURN = 42
 
 def deploy(board: gameboard.GameBoard, player: int) -> None:
-    deploying: int = board.deploy_count(player)
-    scores: npt.NDArray[np.floating] = scoring.deploy_fortify_territory_scoring(board, player)
+    place_troops(board, player, board.deploy_count(player) + trade_cards(board, player))
 
-    # Places all the troops in the highest scoring territory the player owns
+# Trades the best set of cards, but only while forced to: set values go up for everyone,
+# so trading early mostly helps the other players (this tested better than trading every set)
+def trade_cards(board: gameboard.GameBoard, player: int, forced_only: bool = True) -> int:
+    troops: int = 0
+    while not forced_only or board.must_trade(player):
+        best: list[int] | None = cards.best_set(board.hands[player], board.owned(player))
+        if best is None:
+            break
+        gained, bonus = board.trade(player, best)
+        troops += gained
+        print(cards.trade_message(gameboard.PLAYER_COLORS[player], best, gained, bonus))
+    return troops
+
+# Places all the troops in the highest scoring territory the player owns
+def place_troops(board: gameboard.GameBoard, player: int, troops: int) -> None:
+    if troops <= 0:
+        return
+    scores: npt.NDArray[np.floating] = scoring.deploy_fortify_territory_scoring(board, player)
     location: int = int(scores.argmax())
-    board.armies[location] += deploying
-    print(f"{gameboard.PLAYER_COLORS[player]} deployed {deploying} troops to {territory.territory_names[location].title()}")
+    board.armies[location] += troops
+    print(f"{gameboard.PLAYER_COLORS[player]} deployed {troops} troops to {territory.territory_names[location].title()}")
 
 def attack(board: gameboard.GameBoard, player: int, depth: int = DEPTH) -> None:
     # keep making the best attack until no attack improves the board
@@ -29,6 +46,10 @@ def attack(board: gameboard.GameBoard, player: int, depth: int = DEPTH) -> None:
         start, end, attacking_troops = best_move
         board.battle(start, end, attacking_troops)
         print(f"{gameboard.PLAYER_COLORS[player]} attacked {territory.territory_names[end].title()} from {territory.territory_names[start].title()} with {attacking_troops} troops")
+
+        # taking an eliminated player's cards can force a trade, and those troops are placed right away
+        if board.must_trade(player, cards.ELIMINATION_TRADE_HAND):
+            place_troops(board, player, trade_cards(board, player))
 
 # Every attack that captures a territory, either sending all but one troop,
 # or sending only enough that the territory left behind can't be captured by its other enemy neighbors
