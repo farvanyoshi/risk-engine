@@ -6,6 +6,7 @@ import numpy as np
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import gameboard
 from gameboard import GameBoard
 import engine
 import random_moves
@@ -17,6 +18,12 @@ INTERFACE_DIR = os.path.dirname(os.path.abspath(__file__))
 EXTRA_REGIONS = (17, 20, 27, 36, 43, 130)
 # The pieces of Indonesia, drawn together so the whole territory is one color
 INDONESIA_REGIONS = (28, 27, 36, 17)
+
+# Map colors for each player, in the same order as gameboard.PLAYER_COLORS (OpenCV uses blue, green, red)
+PLAYER_BGR = [(0, 255, 0), (0, 0, 255), (255, 170, 60), (0, 230, 255), (220, 120, 200), (0, 150, 255)]
+
+# Milliseconds between AI turns, so the map can be seen changing
+AI_TURN_DELAY = 700
 
 region_to_name = {
         113: "Afghanistan",
@@ -118,7 +125,7 @@ def validate_int_input(value):
     return value.isdigit() or value == ""
 
 def loop_game_stage():
-    global game_phase, available_deployable_troops
+    global game_phase
     if game.is_won():
         return
     if game_phase == "Deploy":
@@ -129,14 +136,8 @@ def loop_game_stage():
         set_next_stage_button("Skip Stage")
         game_phase = "Fortify"
     elif game_phase == "Fortify":
-        ai_play()
-        if game.is_won():
-            return
-        set_next_stage_button("Next Stage")
-        game_phase = "Deploy"
-        disable_button(next_stage_button)
-        available_deployable_troops = game.deploy_count(True)
-        update_available_troops_label()
+        end_turn()
+        return
 
     enable_button(confirm_action_button)
     clear_territories()
@@ -145,22 +146,68 @@ def loop_game_stage():
     update_instructions()
     output_message(game_phase)
 
+def is_human(player: int) -> bool:
+    return player < num_humans
+
+# Passes the turn to the next player still in the game
+def end_turn():
+    global current_player, turns
+    current_player = game.next_player(current_player)
+    turns += 1
+    update_player_label()
+    print(f"It is now {gameboard.player_name(current_player, num_humans)}'s turn")
+
+    if is_human(current_player):
+        start_human_turn()
+    else:
+        # AI turns run one at a time on a timer so the window keeps updating
+        disable_button(next_stage_button)
+        disable_button(confirm_action_button)
+        instruction_text.config(text=f"{gameboard.player_name(current_player, num_humans)} is playing...")
+        root.after(AI_TURN_DELAY, ai_play)
+
+def start_human_turn():
+    global game_phase, available_deployable_troops
+    game_phase = "Deploy"
+    available_deployable_troops = game.deploy_count(current_player)
+    set_next_stage_button("Next Stage")
+    disable_button(next_stage_button)
+    enable_button(confirm_action_button)
+    clear_territories()
+    update_available_troops_label()
+    update_phase_label()
+    update_instructions()
+
 def ai_play():
+    if num_humans == 0 and turns >= gameboard.AI_ONLY_TURN_LIMIT:
+        message = f"No winner after {turns} turns. Most territories: {gameboard.player_name(game.standings()[0][0], num_humans)}"
+        print(message)
+        instruction_text.config(text=message)
+        return
+
     ai = random_moves if easy_ai else engine
-    print("It is now the AI's turn")
-    ai.deploy(game, False)
-    ai.attack(game, False)
+    alive_before = game.alive_players()
+    ai.deploy(game, current_player)
+    ai.attack(game, current_player)
     if not game.is_won():
-        ai.fortify(game, False)
+        ai.fortify(game, current_player)
+    announce_eliminations(alive_before)
     update_region()
-    check_game_over()
-    print("It is now the player's turn")
+    if not check_game_over():
+        end_turn()
+
+def announce_eliminations(alive_before):
+    for p in alive_before:
+        if not game.is_alive(p):
+            message = f"{gameboard.player_name(p, num_humans)} has been eliminated!"
+            print(message)
+            output_message(message)
 
 def check_game_over() -> bool:
     winner = game.winner()
     if winner is None:
         return False
-    message = "The player has won the game!" if winner else "The AI has won the game!"
+    message = f"{gameboard.player_name(winner, num_humans)} has won the game!"
     print(message)
     instruction_text.config(text=message)
     disable_button(next_stage_button)
@@ -183,9 +230,9 @@ def input_action():
         case "Deploy":
             i: int = territory.indexer(start_terr_name.lower())
 
-            if i != -1 and game.owners[i] and 0 < troop_amount_selection <= available_deployable_troops:
+            if i != -1 and game.owners[i] == current_player and 0 < troop_amount_selection <= available_deployable_troops:
                 game.armies[i] += troop_amount_selection
-                print(f"{troop_amount_selection} troops added to {start_terr_name.title()}.")
+                print(f"{gameboard.PLAYER_COLORS[current_player]} added {troop_amount_selection} troops to {start_terr_name.title()}.")
                 available_deployable_troops -= troop_amount_selection
                 update_available_troops_label()
                 if available_deployable_troops == 0:
@@ -199,11 +246,13 @@ def input_action():
             start_index: int = territory.indexer(start_terr_name.lower())
             end_index: int = territory.indexer(end_terr_name.lower())
 
-            if start_index != -1 and end_index != -1 and game.can_attack(True, start_index, end_index, troop_amount_selection):
+            if start_index != -1 and end_index != -1 and game.can_attack(current_player, start_index, end_index, troop_amount_selection):
+                alive_before = game.alive_players()
                 game.battle(start_index, end_index, troop_amount_selection)
-                print(f"Attacked {end_terr_name.title()} from {start_terr_name.title()} with {troop_amount_selection} troops")
-                if game.owners[end_index]:
+                print(f"{gameboard.PLAYER_COLORS[current_player]} attacked {end_terr_name.title()} from {start_terr_name.title()} with {troop_amount_selection} troops")
+                if game.owners[end_index] == current_player:
                     output_message(f"Captured {end_terr_name.title()}!")
+                announce_eliminations(alive_before)
                 set_next_stage_button("Next Stage")
                 clear_territories()
                 if check_game_over():
@@ -216,9 +265,9 @@ def input_action():
             start_index = territory.indexer(start_terr_name.lower())
             end_index = territory.indexer(end_terr_name.lower())
 
-            if start_index != -1 and end_index != -1 and game.can_fortify(True, start_index, end_index, troop_amount_selection):
+            if start_index != -1 and end_index != -1 and game.can_fortify(current_player, start_index, end_index, troop_amount_selection):
                 game.fortify(start_index, end_index, troop_amount_selection)
-                print(f"Fortified {end_terr_name.title()} from {start_terr_name.title()} with {troop_amount_selection} troops")
+                print(f"{gameboard.PLAYER_COLORS[current_player]} fortified {end_terr_name.title()} from {start_terr_name.title()} with {troop_amount_selection} troops")
                 set_next_stage_button("Next Stage")
                 disable_button(confirm_action_button)
                 clear_territories()
@@ -277,7 +326,7 @@ def open_image(canvas, img_cv):
     canvas.configure(image=img_tk)
     canvas.image = img_tk
 
-# Redraws the map: green for the player, red for the AI, with names and troop counts
+# Redraws the map in each owner's color, with names and troop counts
 def update_region():
     #light background
     labeled_img = np.ones((edges.shape[0], edges.shape[1], 3), dtype=np.uint8) * 255  # White background
@@ -292,7 +341,7 @@ def update_region():
         region = regions[region_num - 1]  # get the contour by index
 
         #colors for each region based on owner
-        color = (0, 255, 0) if game.owners[index] else (0, 0, 255)
+        color = PLAYER_BGR[game.owners[index]]
         pieces = INDONESIA_REGIONS if region_num == 28 else (region_num,)
         for piece in pieces:
             cv2.drawContours(labeled_img, [regions[piece - 1]], -1, color, thickness=cv2.FILLED)
@@ -370,15 +419,6 @@ def gamespace():
 
     sys.stdout = TextRedirector(output_log)
 
-    global next_stage_button, confirm_action_button
-
-    next_stage_button = tk.Button(root, text="Next Stage", command=next_stage)
-    next_stage_button.place(x=240,y=530)
-    disable_button(next_stage_button)
-
-    confirm_action_button = tk.Button(root, text="Confirm Action", command=confirm_action)
-    confirm_action_button.place(x=240,y=700)
-
     global instruction_text, output_text, phase_label, start_terr_text, end_terr_text, available_troops_label, output_text_matrix
 
     instruction_text = tk.Label(root, text="")
@@ -389,7 +429,7 @@ def gamespace():
     output_text = tk.Label(root, text="")
     output_text.pack()
 
-    phase_label = tk.Label(root, text=f"Current Game Phase: {game_phase}")
+    phase_label = tk.Label(root, text=f"Current Game Phase: {game_phase}", font=("Arial", 11, "bold"))
     phase_label.pack()
 
     start_terr_text = tk.Label(root, text=f"Start Territory: {start_terr_name}")
@@ -409,8 +449,27 @@ def gamespace():
     troop_entry = tk.Entry(root, textvariable=troop_var, validate="key", validatecommand=vcmd)
     troop_entry.pack()
 
-    update_instructions()
-    print("It is now the player's turn")
+    # buttons sit in a row under the troop entry so they never cover the labels
+    global next_stage_button, confirm_action_button
+    buttons = tk.Frame(root)
+    buttons.pack(pady=5)
+
+    confirm_action_button = tk.Button(buttons, text="Confirm Action", command=confirm_action)
+    confirm_action_button.pack(side=tk.LEFT, padx=10)
+
+    next_stage_button = tk.Button(buttons, text="Next Stage", command=next_stage)
+    next_stage_button.pack(side=tk.LEFT, padx=10)
+    disable_button(next_stage_button)
+
+    print("Players: " + ", ".join(gameboard.player_name(p, num_humans) for p in range(game.num_players)))
+    update_player_label()
+    print(f"It is now {gameboard.player_name(current_player, num_humans)}'s turn")
+    if is_human(current_player):
+        start_human_turn()
+    else:
+        disable_button(confirm_action_button)
+        instruction_text.config(text=f"{gameboard.player_name(current_player, num_humans)} is playing...")
+        root.after(AI_TURN_DELAY, ai_play)
 
 def clear_territories():
     global start_terr_name, end_terr_name
@@ -450,11 +509,16 @@ def update_start_label():
 def update_end_label():
     end_terr_text.config(text=f"End Territory: {end_terr_name}")
 
+# The phase label also shows whose turn it is, in their color
+def update_player_label():
+    update_phase_label()
+
 def update_phase_label():
-    phase_label.config(text=f"Current Game Phase: {game_phase}")
+    b, g, r = PLAYER_BGR[current_player]
+    phase_label.config(text=f"Current Player: {gameboard.player_name(current_player, num_humans)}  |  Current Game Phase: {game_phase}", bg=f"#{r:02x}{g:02x}{b:02x}")
 
 def update_available_troops_label():
-    available_troops_label.config(text=f"You have {available_deployable_troops} troops to deploy")
+    available_troops_label.config(text=f"{gameboard.PLAYER_COLORS[current_player]} has {available_deployable_troops} troops to deploy")
 
 def disable_available_troops_label():
     available_troops_label.config(text="")
@@ -463,21 +527,39 @@ def set_next_stage_button(new_text):
     next_stage_button.config(text=new_text)
 
 def on_space(event):
-    #closes window and opens a new one
-    start_window.destroy()
-    gamespace()
+    start_game()
 
-def run(easy: bool = False):
-    global game, game_phase, start_terr_name, end_terr_name, troop_amount_selection, available_deployable_troops, easy_ai, start_window
+# Reads the player choices, then closes the start window and opens the game
+def start_game():
+    global game, game_phase, num_humans, current_player, turns, easy_ai, start_terr_name, end_terr_name, troop_amount_selection, available_deployable_troops
+    try:
+        humans, ais = int(humans_var.get()), int(ais_var.get())
+    except ValueError:
+        start_error.config(text="Enter whole numbers of players")
+        return
+    problem = gameboard.check_player_counts(humans, ais)
+    if problem:
+        start_error.config(text=problem)
+        return
 
-    game = GameBoard()
+    num_humans = humans
+    easy_ai = bool(easy_var.get())
+    game = GameBoard(humans + ais)
     game_phase = "Deploy"
-    easy_ai = easy
+    current_player = 0
+    turns = 0
 
     start_terr_name = ""
     end_terr_name = ""
     troop_amount_selection = 0
-    available_deployable_troops = game.deploy_count(True)
+    available_deployable_troops = game.deploy_count(current_player)
+
+    #closes window and opens a new one
+    start_window.destroy()
+    gamespace()
+
+def run(easy: bool = False, humans: int | None = None, ais: int | None = None):
+    global start_window, humans_var, ais_var, easy_var, start_error
 
     #Start Window
     start_window = tk.Tk()
@@ -491,8 +573,26 @@ def run(easy: bool = False):
     image_label1.image = tk_image1
     image_label1.pack(padx=5, pady=5)
 
+    #player choice: how many humans and AIs
+    choices = tk.Frame(start_window, bg = "#000")
+    choices.place(relx=0.5, rely=0.62, anchor='center')
+
+    humans_var = tk.StringVar(value = str(1 if humans is None else humans))
+    ais_var = tk.StringVar(value = str(1 if ais is None else ais))
+    easy_var = tk.IntVar(value = int(easy))
+
+    tk.Label(choices, text="Humans", fg = "#fff", bg = "#000", font=("Arial", 12, "bold")).grid(row=0, column=0, padx=5, pady=5)
+    tk.Spinbox(choices, from_=0, to=gameboard.MAX_PLAYERS, width=3, textvariable=humans_var, font=("Arial", 12)).grid(row=0, column=1, padx=5)
+    tk.Label(choices, text="AIs", fg = "#fff", bg = "#000", font=("Arial", 12, "bold")).grid(row=0, column=2, padx=5)
+    tk.Spinbox(choices, from_=0, to=gameboard.MAX_PLAYERS, width=3, textvariable=ais_var, font=("Arial", 12)).grid(row=0, column=3, padx=5)
+    tk.Checkbutton(choices, text="Easy AI", variable=easy_var, fg = "#fff", bg = "#000", selectcolor = "#333", activebackground = "#000", activeforeground = "#fff").grid(row=0, column=4, padx=5)
+    tk.Button(choices, text="Start", command=start_game).grid(row=0, column=5, padx=5)
+
+    start_error = tk.Label(choices, text="", fg = "#f00", bg = "#000")
+    start_error.grid(row=1, column=0, columnspan=6)
+
     #textbox
-    text_label = tk.Label(start_window, text="Press Space to Start Game!", fg = "#f00", bg = "#000",font=("Arial", 16, "bold"))
+    text_label = tk.Label(start_window, text=f"Choose {gameboard.MIN_PLAYERS} to {gameboard.MAX_PLAYERS} players, then press Space or Start!", fg = "#f00", bg = "#000",font=("Arial", 16, "bold"))
     text_label.place(relx=0.5, rely=0.8, anchor='center') #centers textbox
 
     start_window.bind("<space>", on_space)  # bind space key
