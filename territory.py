@@ -116,11 +116,9 @@ continents: npt.NDArray[np.bool] = np.array((
 
 continent_bonuses: npt.NDArray[np.integer] = np.array([3, 7, 5, 5, 2, 2])
 
-# Calculates bonus per continent
-def continent_bonus(player: bool, owners: npt.NDArray[np.bool]) -> int:
-    if not player: owners = ~owners
-
-    return int((np.all(owners & continents == continents, axis = 1) * continent_bonuses).sum())
+# Calculates the bonus for every continent fully inside owned (a True/False mask of one player's territories)
+def continent_bonus(owned: npt.NDArray[np.bool]) -> int:
+    return int((np.all(owned & continents == continents, axis = 1) * continent_bonuses).sum())
 
 def check_adjacency(start_territory_index: int, end_territory_index: int) -> int:
     return adjMatrix[start_territory_index][end_territory_index]
@@ -132,7 +130,7 @@ def indexer(location: str) -> int:
     except:
          return -1
 
-# Finds all territories owned by the player (flip the values for the AI)
+# Finds all of the player's territories connected to terr through other territories they own
 def total_connections(terr: int, owners: npt.NDArray[np.bool]) -> npt.NDArray[np.bool]:
     checked: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
     neighbors: npt.NDArray[np.bool] = np.zeros(42, dtype = bool)
