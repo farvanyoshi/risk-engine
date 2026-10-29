@@ -16,9 +16,9 @@ def ask_int(prompt: str, low: int, high: int) -> int | None:
             continue
         if low <= number <= high:
             return number
-        print(f"Invalid number of troops. Enter a number between {low} and {high}.")
+        print(f"Enter a number between {low} and {high}.")
 
-def deploy(board: gameboard.GameBoard, player: bool) -> None:
+def deploy(board: gameboard.GameBoard, player: int) -> None:
     print_territories(board, player)
     print_continent_fraction(board, player)
     owned = board.owned(player)
@@ -26,7 +26,7 @@ def deploy(board: gameboard.GameBoard, player: bool) -> None:
     # Allow the player to draft to multiple places on the same turn
     deployed: int = board.deploy_count(player)
     while deployed:
-        location: str = input(f"You have {deployed} troops to deploy. Where are you deploying? ").strip().lower()
+        location: str = input(f"{gameboard.PLAYER_COLORS[player]}, you have {deployed} troops to deploy. Where are you deploying? ").strip().lower()
         if location == 'help':
             print_territories(board, player)
             continue
@@ -47,11 +47,11 @@ def deploy(board: gameboard.GameBoard, player: bool) -> None:
         print(f"{placing} troops added to {location.title()}.")
         deployed -= placing
 
-def attack(board: gameboard.GameBoard, player: bool) -> None:
+def attack(board: gameboard.GameBoard, player: int) -> None:
     # The player can keep attacking until they enter nothing
     while not board.is_won():
         owned = board.owned(player)
-        start: str = input("Where would you like to attack from? (hit the enter key to end your attack phase, or help to see all your territories' troops) ").strip().lower()
+        start: str = input(f"{gameboard.PLAYER_COLORS[player]}, where would you like to attack from? (hit the enter key to end your attack phase, or help to see all territories' troops) ").strip().lower()
 
         if start == '':
             return
@@ -77,8 +77,8 @@ def attack(board: gameboard.GameBoard, player: bool) -> None:
             continue
 
         print("Possible targets:")
-        for name, army in zip(territory.territory_names[possible_targets], board.armies[possible_targets]):
-            print(f"{name.title()} has {army} troops")
+        for name, army, owner in zip(territory.territory_names[possible_targets], board.armies[possible_targets], board.owners[possible_targets]):
+            print(f"{name.title()} ({gameboard.PLAYER_COLORS[owner]}) has {army} troops")
 
         final_target: str = input("What territory are you attacking? (Input nothing to choose a different start) ").strip().lower()
         if final_target == '':
@@ -93,17 +93,20 @@ def attack(board: gameboard.GameBoard, player: bool) -> None:
         if attacking_troops is None:
             continue
 
+        defender: int = int(board.owners[final_index])
         board.battle(start_index, final_index, attacking_troops)
         print(f"Attacked {final_target.title()} from {start.title()} with {attacking_troops} troops")
-        if board.owned(player)[final_index]:
+        if board.owners[final_index] == player:
             print(f"You captured {final_target.title()}! It now has {board.armies[final_index]} troops.")
+            if not board.is_alive(defender):
+                print(f"{gameboard.PLAYER_COLORS[defender]} has been eliminated!")
         else:
             print(f"{final_target.title()} held with {board.armies[final_index]} troops left.")
 
-def fortify(board: gameboard.GameBoard, player: bool) -> None:
+def fortify(board: gameboard.GameBoard, player: int) -> None:
     owned = board.owned(player)
     while True:
-        start: str = input("Where would you like to fortify from? (enter nothing to skip) ").strip().lower()
+        start: str = input(f"{gameboard.PLAYER_COLORS[player]}, where would you like to fortify from? (enter nothing to skip) ").strip().lower()
         if start == '':
             return
         elif start == 'help':
@@ -146,20 +149,18 @@ def fortify(board: gameboard.GameBoard, player: bool) -> None:
         print(f"Moved {placing} troops from {start.title()} to {end.title()}.")
         return
 
-def print_territories(board: gameboard.GameBoard, player: bool) -> None:
-    owned = board.owned(player)
-    # List out all named territories to the player
-    names = np.strings.title(territory.territory_names[owned])
-    soldiers = board.armies[owned].astype(str)
-    print("Your owned territories & troop counts:")
-    print('\n'.join(np.strings.add(names + ', ', soldiers)))
+def print_territories(board: gameboard.GameBoard, player: int) -> None:
+    # List out all named territories, the player's own first and then each opponent's
+    for other in [player] + [p for p in board.alive_players() if p != player]:
+        owned = board.owned(other)
+        names = np.strings.title(territory.territory_names[owned])
+        soldiers = board.armies[owned].astype(str)
+        heading = "Your" if other == player else f"{gameboard.PLAYER_COLORS[other]}'s"
+        print(f"\n{heading} owned territories & troop counts:")
+        print('\n'.join(np.strings.add(names + ', ', soldiers)))
+    print()
 
-    opp_names = np.strings.title(territory.territory_names[~owned])
-    opp_soldiers = board.armies[~owned].astype(str)
-    print("\nOpponent's owned territories & troop counts:")
-    print('\n'.join(np.strings.add(opp_names + ', ', opp_soldiers)))
-
-def print_continent_fraction(board: gameboard.GameBoard, player: bool) -> None:
+def print_continent_fraction(board: gameboard.GameBoard, player: int) -> None:
     owned_per_continent = np.sum(territory.continents & board.owned(player), axis = 1)
     total_per_continent = np.sum(territory.continents, axis = 1)
     for name, owned, total in zip(territory.continent_names, owned_per_continent, total_per_continent):

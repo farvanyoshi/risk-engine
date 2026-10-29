@@ -8,6 +8,21 @@ MAX_PLAYERS = 6
 # Each player is known by a number from 0 up, and shown with one of these colors
 PLAYER_COLORS: list[str] = ["Green", "Red", "Blue", "Yellow", "Purple", "Orange"]
 
+# Games with only AI players stop after this many turns in case the AIs can't finish each other off
+AI_ONLY_TURN_LIMIT = 2000
+
+# Returns why a mix of human and AI players can't be used, or None if it can
+def check_player_counts(humans: int, ais: int) -> str | None:
+    if humans < 0 or ais < 0:
+        return "The number of players can't be negative."
+    if not MIN_PLAYERS <= humans + ais <= MAX_PLAYERS:
+        return f"The game needs between {MIN_PLAYERS} and {MAX_PLAYERS} players in total."
+    return None
+
+# Humans take the first seats, then the AIs
+def player_name(player: int, humans: int) -> str:
+    return f"{PLAYER_COLORS[player]} ({'human' if player < humans else 'AI'})"
+
 # Starting troops: every territory gets 1, 2, or 3 troops
 INIT_ARMIES: npt.NDArray[np.integer] = np.array([1, 2, 3] * 14)
 
@@ -51,6 +66,11 @@ class GameBoard:
 
     def is_won(self) -> bool:
         return self.winner() is not None
+
+    # (player, territories, troops) for every player still in the game, most territories first
+    def standings(self) -> list[tuple[int, int, int]]:
+        rows = [(player, int(np.count_nonzero(self.owned(player))), int(self.armies[self.owned(player)].sum())) for player in self.alive_players()]
+        return sorted(rows, key = lambda row: (row[1], row[2]), reverse = True)
 
     # Troops given at the start of a turn: owned territories // 3 (minimum 3) plus continent bonuses
     def deploy_count(self, player: int) -> int:
