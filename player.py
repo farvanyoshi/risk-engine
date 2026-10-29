@@ -1,3 +1,4 @@
+import cards
 import gameboard
 import numpy as np
 import numpy.typing as npt
@@ -21,14 +22,47 @@ def ask_int(prompt: str, low: int, high: int) -> int | None:
 def deploy(board: gameboard.GameBoard, player: int) -> None:
     print_territories(board, player)
     print_continent_fraction(board, player)
-    owned = board.owned(player)
+    place_troops(board, player, board.deploy_count(player) + trade_cards(board, player))
 
-    # Allow the player to draft to multiple places on the same turn
-    deployed: int = board.deploy_count(player)
+# Lets the player trade sets of cards, and makes them trade while they hold 5 or more. Returns the troops gained
+def trade_cards(board: gameboard.GameBoard, player: int) -> int:
+    troops: int = 0
+    while cards.all_sets(board.hands[player]):
+        forced: bool = board.must_trade(player)
+        print_cards(board, player)
+        answer: str = input(f"{gameboard.PLAYER_COLORS[player]}, trade a set? (type 'best', or three card numbers like 1 3 4{'' if forced else ', or nothing to skip'}) ").strip().lower()
+
+        if answer == '':
+            if not forced:
+                return troops
+            print(f"You have {len(board.hands[player])} cards, so you must trade.")
+            continue
+
+        hand: list[int] = board.hands[player]
+        if answer == 'best':
+            traded: list[int] | None = cards.best_set(hand, board.owned(player))
+        else:
+            try:
+                traded = [hand[int(number) - 1] for number in answer.replace(',', ' ').split()]
+            except (ValueError, IndexError):
+                traded = None
+        if traded is None or not cards.is_valid_set(traded):
+            print("That is not a set. A set is three of the same symbol, one of each symbol, or any two cards with a wild.")
+            continue
+
+        gained, bonus = board.trade(player, traded)
+        troops += gained
+        print(cards.trade_message("You", traded, gained, bonus))
+    return troops
+
+# Allow the player to deploy to multiple places
+def place_troops(board: gameboard.GameBoard, player: int, deployed: int) -> None:
+    owned = board.owned(player)
     while deployed:
         location: str = input(f"{gameboard.PLAYER_COLORS[player]}, you have {deployed} troops to deploy. Where are you deploying? ").strip().lower()
         if location == 'help':
             print_territories(board, player)
+            print_cards(board, player)
             continue
 
         i: int = territory.indexer(location)
@@ -57,6 +91,7 @@ def attack(board: gameboard.GameBoard, player: int) -> None:
             return
         elif start == 'help':
             print_territories(board, player)
+            print_cards(board, player)
             continue
 
         start_index: int = territory.indexer(start)
@@ -99,7 +134,11 @@ def attack(board: gameboard.GameBoard, player: int) -> None:
         if board.owners[final_index] == player:
             print(f"You captured {final_target.title()}! It now has {board.armies[final_index]} troops.")
             if not board.is_alive(defender):
-                print(f"{gameboard.PLAYER_COLORS[defender]} has been eliminated!")
+                print(f"{gameboard.PLAYER_COLORS[defender]} has been eliminated, and you take their cards!")
+                # 6 or more cards means trading right away, and placing those troops before attacking again
+                if board.must_trade(player, cards.ELIMINATION_TRADE_HAND):
+                    print(f"You have {len(board.hands[player])} cards, so you must trade down to {cards.MUST_TRADE_HAND - 1} or fewer now.")
+                    place_troops(board, player, trade_cards(board, player))
         else:
             print(f"{final_target.title()} held with {board.armies[final_index]} troops left.")
 
@@ -159,6 +198,17 @@ def print_territories(board: gameboard.GameBoard, player: int) -> None:
         print(f"\n{heading} owned territories & troop counts:")
         print('\n'.join(np.strings.add(names + ', ', soldiers)))
     print()
+
+# Shows the player's cards, what the next set is worth, and how many cards everyone else holds
+def print_cards(board: gameboard.GameBoard, player: int) -> None:
+    hand: list[int] = board.hands[player]
+    if hand:
+        print("Your cards: " + "  ".join(f"{number}. {cards.card_name(card)}" for number, card in enumerate(hand, 1)))
+    else:
+        print("You have no cards.")
+    print(f"The next set traded is worth {cards.set_value(board.sets_traded)} troops.")
+    others = [f"{gameboard.PLAYER_COLORS[p]} {len(board.hands[p])}" for p in board.alive_players() if p != player]
+    print("Cards held by others: " + ", ".join(others))
 
 def print_continent_fraction(board: gameboard.GameBoard, player: int) -> None:
     owned_per_continent = np.sum(territory.continents & board.owned(player), axis = 1)

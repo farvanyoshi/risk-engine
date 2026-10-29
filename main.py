@@ -3,6 +3,7 @@ import random
 
 import numpy as np
 
+import cards
 import engine
 import gameboard
 from gameboard import GameBoard
@@ -42,6 +43,7 @@ def play(humans: int, ais: int, easy: bool) -> None:
             controller = player if current < humans else ai
             alive_before: list[int] = game.alive_players()
 
+            game.start_turn(current)
             controller.deploy(game, current)
             controller.attack(game, current)
 
@@ -54,6 +56,11 @@ def play(humans: int, ais: int, easy: bool) -> None:
             if game.is_won():
                 break
             controller.fortify(game, current)
+
+            # capturing a territory this turn earns the top card of the deck
+            card = game.end_turn(current)
+            if card is not None:
+                print(f"{gameboard.player_name(current, humans)} earned a card: {cards.card_name(card)}")
 
             current = game.next_player(current)
             turns += 1
