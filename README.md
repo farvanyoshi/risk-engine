@@ -16,7 +16,7 @@ python main.py --easy               # AIs use random moves instead of the engine
 python main.py --seed 5             # replay the same starting board
 ```
 
-The terminal game only needs `numpy`. The GUI also needs `opencv-python`, `pillow`, and tkinter (on Linux: `sudo apt install python3-tk`).
+The terminal game only needs `numpy`. The GUI also needs `opencv-python`, `pillow`, and `tkinter`).
 
 ## Rules
 
@@ -34,7 +34,7 @@ The terminal game only needs `numpy`. The GUI also needs `opencv-python`, `pillo
 
 ### Cards
 Cards work like real Risk, except the deck is never shuffled, so nothing about them is random.
-- **The deck:** 44 cards. There is one card per territory, each with a symbol (Infantry, Cavalry, or Artillery, 14 of each), plus 2 wilds. The deck is always drawn in the same, public order: the territories alphabetically from Afghanistan to Madagascar, a wild, Middle East to Yakutsk, then the other wild. Symbols go Infantry, Cavalry, Artillery in that alphabetical order (Afghanistan is Infantry, Alaska is Cavalry, Alberta is Artillery, and so on).
+- **The deck:** 44 cards. There is one card per territory, each with a symbol (Infantry, Cavalry, or Artillery, 14 of each), plus 2 wilds. The deck is always drawn in the same, public order: the Deterministic Risk in Python and NumPy: 2–6 human or AI players, fixed-order cards, terminal and clickable GUI, heuristic search AIterritories alphabetically from Afghanistan to Madagascar, a wild, Middle East to Yakutsk, then the other wild. Symbols go Infantry, Cavalry, Artillery in that alphabetical order (Afghanistan is Infantry, Alaska is Cavalry, Alberta is Artillery, and so on).
 - **Earning:** if you captured at least one territory on your turn, you take the top card at the end of it (one card per turn at most). When the deck runs out, the traded-in cards become the new deck, in the order they were traded.
 - **Sets:** three cards with the same symbol, one of each symbol, or any two cards with a wild.
 - **Trading:** during your deploy phase, trade sets for extra troops. The value goes up with every set anyone trades: 4, 6, 8, 10, 12, 15, then 5 more each time. If one of the traded cards is a territory you own, 2 more troops go straight onto it (the first such card alphabetically, if there are several).
